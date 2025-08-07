@@ -15,10 +15,7 @@ export async function renderBiggestHits() {
             <div class="hit-card" data-hit-id="${playlist.id}">
                 <div class="hit-card-cover">
                     <img
-                        src="${
-                            playlist.image_url ??
-                            "https://s3.eu-central-1.amazonaws.com/uploads.mangoweb.org/shared-prod/visegradfund.org/uploads/2021/08/placeholder-male.jpg"
-                        }"
+                        src="https://picsum.photos/300"
                         alt="Flowers"
                     />
                     <button class="hit-play-btn">

@@ -44,6 +44,12 @@
                         <button class="search-library-btn">
                             <i class="fas fa-search"></i>
                         </button>
+                        <input
+                            id="search-library-input"
+                            type="text"
+                            placeholder="Search in your library"
+                        />
+
                         <button class="sort-btn">
                             Recents
                             <i class="fas fa-list"></i>
@@ -577,6 +583,49 @@
         </div>
         <!-- Toast message -->
         <div id="toast"></div>
+
+        <span class="tool-tip-sidebar"> Create a playlist </span>
+        <div class="dropdown">
+            <div class="section">
+                <div class="section-title">Sort by</div>
+                <div class="option active">
+                    <span>Recents</span>
+                    <i class="fa-solid fa-check check-icon"></i>
+                </div>
+                <div class="option">
+                    <span>Recently added</span>
+                    <i class="fa-solid fa-check check-icon"></i>
+                </div>
+                <div class="option">
+                    <span>Alphabetical</span>
+                    <i class="fa-solid fa-check check-icon"></i>
+                </div>
+                <div class="option">
+                    <span>Creator</span>
+                    <i class="fa-solid fa-check check-icon"></i>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="section">
+                <div class="section-title">View as</div>
+                <div class="view-options">
+                    <button class="view-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <button class="view-btn">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                    <button class="view-btn active">
+                        <i class="fa-solid fa-table-cells-large"></i>
+                    </button>
+                    <button class="view-btn">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
         <script src="main.js" type="module"></script>
     </body>
 </html>

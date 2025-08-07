@@ -89,10 +89,7 @@ export async function renderPlaylist(
                 <div class="track-number">1</div>
                 <div class="track-image">
                     <img
-                        src="${
-                            track.image_url ??
-                            "https://upload.wikimedia.org/wikipedia/commons/4/4d/Music_logo.png?20220615234239"
-                        }"
+                        src="https://picsum.photos/300"
                         alt="${track.title ?? "Unknown Track"}"
                     />
                 </div>
@@ -102,7 +99,9 @@ export async function renderPlaylist(
                     </div>
                 </div>
                 <div class="track-plays">${track.play_count ?? "0"}</div>
-                <div class="track-duration">${convertTime(track.duration) ?? '0'}</div>
+                <div class="track-duration">${
+                    convertTime(track.duration) ?? "0"
+                }</div>
                 <button class="track-menu-btn">
                     <i class="fas fa-ellipsis-h"></i>
                 </button>

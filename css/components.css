@@ -193,6 +193,23 @@
     justify-content: center;
     transition: all var(--transition-fast);
 }
+.search-library #search-library-input {
+    display: none;
+    flex: 1;
+    padding: 7px 13px;
+    border-radius: 6px;
+    background-color: var(--bg-active);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.search-library #search-library-input.show {
+    display: block;
+}
+
+.search-library-label i {
+    padding-top: 3px;
+}
 
 .search-library-btn:hover {
     background-color: var(--bg-tertiary);
@@ -814,7 +831,7 @@
     position: relative;
 }
 
-.artist-hero .eye-icon {
+.eye-icon {
     cursor: pointer;
     position: absolute;
     top: 21px;

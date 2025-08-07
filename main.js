@@ -3,6 +3,7 @@ import toast from "./utils/toast.js"
 import { renderBiggestHits } from "./render/renderBiggestHits.js"
 import { renderArtists } from "./render/renderArtists.js"
 import { renderPlaylist } from "./render/renderPlaylist.js"
+import { toolTipSidebar, layoutSelector } from "./src/sidebar.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -285,9 +286,9 @@ document.addEventListener("DOMContentLoaded", function () {
 // Player functionality
 document.addEventListener("DOMContentLoaded", function () {
     const playControl = document.querySelector(".player")
-    const controlPlayer = playControl.querySelectorAll(".tool-tip")
+    const toolTip = playControl.querySelectorAll(".tool-tip")
 
-    controlPlayer.forEach((item) => {
+    toolTip.forEach((item) => {
         const controlBtn = item.closest(".control-btn")
         if (controlBtn) {
             controlBtn.addEventListener("mouseover", (e) => {
@@ -299,6 +300,30 @@ document.addEventListener("DOMContentLoaded", function () {
             })
         }
     })
+})
+// Sidebar functionality
+document.addEventListener("DOMContentLoaded", function () {
+    const searchBtn = document.querySelector(".search-library-btn")
+    const searchInput = document.querySelector("#search-library-input")
+    const sortText = document.querySelector(".sort-btn")
+    searchBtn.addEventListener("click", (e) => {
+        e.preventDefault()
+        searchBtn.style.display = "none"
+        searchInput.classList.add("show")
+        searchInput.focus()
+        sortText.innerHTML = '<i class="fas fa-list"></i>'
+    })
+
+    document.addEventListener("click", (e) => {
+        if (!searchInput.contains(e.target) && !searchBtn.contains(e.target)) {
+            searchInput.classList.remove("show")
+            searchBtn.style.display = "block"
+            sortText.innerHTML = 'Recents <i class="fas fa-list"></i>'
+        }
+    })
+
+    toolTipSidebar()
+    layoutSelector()
 })
 
 // Other functionality
@@ -373,6 +398,18 @@ async function updateCurrentUser(user) {
     const userMenu = headerAction.querySelector(".user-menu")
     const userName = document.querySelector(".user-name")
     const userAvatar = document.querySelector(".user-avatar")
+
+    const homeButton = document.querySelector(".home-btn")
+    const logoButton = document.querySelector(".logo")
+
+    homeButton.addEventListener("click", (e) => {
+        e.preventDefault()
+        window.location.href = "./index.html"
+    })
+
+    logoButton.addEventListener("click", (e) => {
+        window.location.href = "./index.html"
+    })
 
     try {
         const { user } = await httpRequest.get("users/me")
