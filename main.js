@@ -213,6 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 )
                 localStorage.setItem("access-token", access_token)
                 localStorage.setItem("user", user)
+                console.log(user)
 
                 updateCurrentUser(user)
                 closeModal()
@@ -301,6 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     })
 })
+
 // Sidebar functionality
 document.addEventListener("DOMContentLoaded", function () {
     const searchBtn = document.querySelector(".search-library-btn")

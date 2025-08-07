@@ -1,3 +1,5 @@
+import httpRequest from "../utils/httpRequest.js"
+
 export function toolTipSidebar() {
     const toolTip = document.querySelector(".tool-tip-sidebar")
     const createBtn = document.querySelector(".create-btn")
@@ -27,7 +29,21 @@ export function layoutSelector() {
         const x = e.currentTarget.offsetLeft
         const y = e.currentTarget.offsetTop
 
-        dropDown.style.left = `${x - 100}px`
-        dropDown.style.top = `${y + 30}px`
+        const currentDisplay = getComputedStyle(dropDown).display
+
+        if (currentDisplay === "none") {
+            dropDown.style.display = "block"
+            dropDown.style.left = `${x - 100}px`
+            dropDown.style.top = `${y + 30}px`
+        } else {
+            dropDown.style.display = "none"
+        }
     }
+
+    document.addEventListener("click", (e) => {
+        // Nếu click ra ngoài input => ẩn
+        if (!sortBtn.contains(e.target) && !dropDown.contains(e.target)) {
+            dropDown.style.display = "none"
+        }
+    })
 }
