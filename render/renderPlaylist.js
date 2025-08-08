@@ -12,7 +12,6 @@ export async function renderPlaylist(
     try {
         const { tracks } = await httpRequest.get(`tracks`)
         const trackFit = tracks.filter((track) => track.artist_id === id)
-        console.log(id)
 
         if (isArtist) {
             const getArtist = await httpRequest.get(`artists/${id}`)
@@ -108,7 +107,6 @@ export async function renderPlaylist(
             </div>`
             )
             .join("")
-        console.log(html)
 
         trackList.innerHTML = html
     } catch (error) {

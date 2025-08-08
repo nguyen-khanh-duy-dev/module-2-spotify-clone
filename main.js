@@ -3,7 +3,7 @@ import toast from "./utils/toast.js"
 import { renderBiggestHits } from "./render/renderBiggestHits.js"
 import { renderArtists } from "./render/renderArtists.js"
 import { renderPlaylist } from "./render/renderPlaylist.js"
-import { toolTipSidebar, layoutSelector } from "./src/sidebar.js"
+import { toolTipSidebar, layoutSelector, renderSidebar } from "./src/sidebar.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -177,13 +177,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 )
 
                 localStorage.setItem("access-token", access_token)
-                localStorage.setItem("user", user)
+                localStorage.setItem("user", JSON.stringify(user))
                 updateCurrentUser(user)
                 closeModal()
                 toast.success(
                     "Success",
                     `Created ${user.username.split("@")[0]}`
                 )
+                window.location.href = "./index.html"
+                await renderSidebar()
             } catch (error) {
                 const messageError = error?.response?.error.code
 
@@ -212,9 +214,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     credentials
                 )
                 localStorage.setItem("access-token", access_token)
-                localStorage.setItem("user", user)
-                console.log(user)
+                localStorage.setItem("user", JSON.stringify(user))
 
+                window.location.href = "./index.html"
+                await renderSidebar()
                 updateCurrentUser(user)
                 closeModal()
                 toast.success(
@@ -231,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Logout
     if (logoutBtn) {
-        logoutBtn.addEventListener("click", (e) => {
+        logoutBtn.addEventListener("click", async (e) => {
             localStorage.removeItem("access-token")
             localStorage.removeItem("user")
 
@@ -241,6 +244,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             userMenu.style.display = "none"
             authButtons.style.display = "flex"
+            window.location.href = "./index.html"
+            await renderSidebar()
         })
     }
 })
@@ -304,7 +309,7 @@ document.addEventListener("DOMContentLoaded", function () {
 })
 
 // Sidebar functionality
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
     const searchBtn = document.querySelector(".search-library-btn")
     const searchInput = document.querySelector("#search-library-input")
     const sortText = document.querySelector(".sort-btn")
@@ -326,6 +331,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     toolTipSidebar()
     layoutSelector()
+    await renderSidebar()
 })
 
 // Other functionality
@@ -444,7 +450,6 @@ function showDetailPlaylist() {
     const hitSection = document.querySelector(".hits-section")
     const artistSection = document.querySelector(".artists-section")
 
-    console.log(hitSection, artistSection)
     detailPlaylist.scrollTo({
         top: 0,
         behavior: "smooth",
