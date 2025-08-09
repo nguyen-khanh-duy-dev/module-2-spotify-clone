@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Player functionality
 document.addEventListener("DOMContentLoaded", function () {
     const playControl = document.querySelector(".player")
-    const toolTip = playControl.querySelectorAll(".tool-tip")
+    const toolTip = document.querySelectorAll(".tool-tip")
 
     toolTip.forEach((item) => {
         const controlBtn = item.closest(".control-btn")
@@ -312,20 +312,24 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", async function () {
     const searchBtn = document.querySelector(".search-library-btn")
     const searchInput = document.querySelector("#search-library-input")
-    const sortText = document.querySelector(".sort-btn")
+    const sortBtn = document.querySelector(".sort-btn")
+
     searchBtn.addEventListener("click", (e) => {
         e.preventDefault()
         searchBtn.style.display = "none"
         searchInput.classList.add("show")
         searchInput.focus()
-        sortText.innerHTML = '<i class="fas fa-list"></i>'
+        sortBtn.innerHTML = '<i class="fas fa-list"></i>'
     })
 
     document.addEventListener("click", (e) => {
+        const optionActive = document.querySelector(".option.active")
+
         if (!searchInput.contains(e.target) && !searchBtn.contains(e.target)) {
             searchInput.classList.remove("show")
             searchBtn.style.display = "block"
-            sortText.innerHTML = 'Recents <i class="fas fa-list"></i>'
+
+            sortBtn.innerHTML = `${optionActive.innerText} <i class="fas fa-list"></i>`
         }
     })
 
@@ -355,6 +359,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     detailBiggestHitsPlaylist(isArtist)
 })
 
+// Function to show detail Play list of Artist
 function detailArtistPlaylist(isArtist) {
     const artistCards = document.querySelectorAll(".artist-card")
     isArtist = true
@@ -376,6 +381,7 @@ function detailArtistPlaylist(isArtist) {
         }
     })
 }
+// Function to show detail Play list of Biggest Hit
 
 function detailBiggestHitsPlaylist(isArtist) {
     const biggestHitsCards = document.querySelectorAll(".hit-card")
@@ -436,6 +442,7 @@ async function updateCurrentUser(user) {
     }
 }
 
+// CHưa sử dụng
 async function getTracks() {
     try {
         const { tracks } = await httpRequest.get("tracks")

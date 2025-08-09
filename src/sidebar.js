@@ -1,5 +1,7 @@
 import httpRequest from "../utils/httpRequest.js"
 
+// Function to show tool-tip at sidebar => Xử lý trường hợp có thanh cuộn làm ẩn tool-tip
+//  => Tách riêng tool tip ở đây xuống cuối file html
 export function toolTipSidebar() {
     const toolTip = document.querySelector(".tool-tip-sidebar")
     const createBtn = document.querySelector(".create-btn")
@@ -22,6 +24,7 @@ export function toolTipSidebar() {
     })
 }
 
+// Function to show modal selector at sidebar
 export function layoutSelector() {
     const sortBtn = document.querySelector(".sort-btn")
     const dropDown = document.querySelector(".dropdown")
@@ -54,8 +57,18 @@ export async function renderSidebar() {
     const libraryContent = document.querySelector(".library-content")
     const dropDown = document.querySelector(".dropdown")
     const optionSort = dropDown.querySelectorAll(".option")
+    const viewAs = document.querySelectorAll(".view-btn")
 
-    updateViewAs()
+    viewAs.forEach((view) => {
+        view.onclick = (e) => {
+            const beforeViewAsActive =
+                document.querySelector(".view-btn.active")
+            e.currentTarget.classList.add("active")
+            beforeViewAsActive.classList.remove("active")
+
+            updateViewAs(e.currentTarget, libraryContent)
+        }
+    })
 
     if (user) {
         const userID = JSON.parse(user).id
@@ -84,24 +97,31 @@ export async function renderSidebar() {
             option.addEventListener("click", (e) => {
                 const beforeOptionActive =
                     dropDown.querySelector(".option.active")
+                const currentActiveViewAs =
+                    document.querySelector(".view-btn.active")
+
                 beforeOptionActive.classList.remove("active")
                 e.currentTarget.classList.add("active")
+
                 const currentOptionText = e.currentTarget.textContent.trim()
+                // sortBtn.outer = `Hehe <i class="fas fa-list"></i>`
+
                 if (currentOptionText === "Recents") {
                     libraryContent.innerHTML = ``
                     renderMyPlayList(sortRecentAdded, libraryContent)
+                    updateViewAs(currentActiveViewAs, libraryContent)
 
                     // Sắp xếp này chưa đúng, sau cần sửa lại
                 } else if (currentOptionText === "Recently added") {
                     libraryContent.innerHTML = ``
                     renderMyPlayList(sortRecentAdded, libraryContent)
-                    updateViewAs(sortRecentAdded)
+                    updateViewAs(currentActiveViewAs, libraryContent)
                 } else if (currentOptionText === "Alphabetical") {
                     renderMyPlayList(sortAlphabetical, libraryContent)
-                    updateViewAs(sortAlphabetical)
+                    updateViewAs(currentActiveViewAs, libraryContent)
                 } else if (currentOptionText === "Creator") {
                     renderMyPlayList(sortAlphabetical, libraryContent)
-
+                    updateViewAs(currentActiveViewAs, libraryContent)
                     // Sắp xếp này chưa đúng, sau cần sửa lại
                 }
             })
@@ -111,6 +131,7 @@ export async function renderSidebar() {
     }
 }
 
+// Function to render my play list at sidebar
 function renderMyPlayList(myPlaylists, parentElement) {
     parentElement.innerHTML = `<div class="library-item active">
                             <div class="item-icon liked-songs">
@@ -147,99 +168,15 @@ function renderMyPlayList(myPlaylists, parentElement) {
     parentElement.insertAdjacentHTML("beforeend", html)
 }
 
-function updateViewAs(myPlaylists) {
-    const viewsBtn = document.querySelectorAll(".view-btn")
-    viewsBtn.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-            const beforeActive = document.querySelector(".view-btn.active")
-            const currentBtn = e.currentTarget
-            beforeActive.classList.remove("active")
-            currentBtn.classList.add("active")
-
-            if (currentBtn.classList.contains("compact-list")) {
-                const libraryContent =
-                    document.querySelector(".library-content")
-                updateCompactList(myPlaylists, libraryContent, "compact-list")
-            } else if (currentBtn.classList.contains("default-list")) {
-                const libraryContent =
-                    document.querySelector(".library-content")
-                updateDefaultList(myPlaylists, libraryContent, "default-list")
-            }
-        })
-    })
-}
-
-function updateCompactList(
-    myPlaylists,
-    parentElement,
-    viewType = "compact-list"
-) {
-    parentElement.innerHTML = `<div class="library-item active">
-                            
-                            <div class="item-info">
-                                <div class="item-title">Liked Songs</div>
-                                
-                            </div>
-                        </div>`
-    if (myPlaylists) {
-        const html = myPlaylists
-            .map(
-                (playlist) => ` 
-                <div class="library-item">
-                    
-                    <div class="item-info">
-                        <div class="item-title">${
-                            playlist.name ?? "Không xác định"
-                        }</div>
-                        
-                    </div>
-                </div>`
-            )
-            .join("")
-        parentElement.insertAdjacentHTML("beforeend", html)
-    }
-}
-
-function updateDefaultList(
-    myPlaylists,
-    parentElement,
-    viewType = "default-list"
-) {
-    console.log(myPlaylists)
-
-    parentElement.innerHTML = `<div class="library-item active">
-                            <div class="item-icon liked-songs">
-                                <i class="fas fa-heart"></i>
-                            </div>
-                            <div class="item-info">
-                                <div class="item-title">Liked Songs</div>
-                                <div class="item-subtitle">
-                                    <i class="fas fa-thumbtack"></i>
-                                    Playlist • 3 songs
-                                </div>
-                            </div>
-                        </div>`
-    if (myPlaylists) {
-        const html = myPlaylists
-            .map(
-                (playlist) => ` 
-                <div class="library-item">
-                    <img
-                        src="${"https://picsum.photos/300"}"
-                        alt="${playlist.name ?? "Không xác định"}"
-                        class="item-image"
-                    />
-                    <div class="item-info">
-                        <div class="item-title">${
-                            playlist.name ?? "Không xác định"
-                        }</div>
-                        <div class="item-subtitle">${
-                            playlist.user_username ?? "Không xác định"
-                        }</div>
-                    </div>
-                </div>`
-            )
-            .join("")
-        parentElement.insertAdjacentHTML("beforeend", html)
+// Function to update view as sidebar => using add class at layout css
+function updateViewAs(currentActiveViewAs, libraryContent) {
+    if (currentActiveViewAs.classList.contains("compact-list")) {
+        libraryContent.className = "library-content compact-list"
+    } else if (currentActiveViewAs.classList.contains("default-list")) {
+        libraryContent.className = "library-content default-list"
+    } else if (currentActiveViewAs.classList.contains("compact-grid")) {
+        libraryContent.className = "library-content compact-grid"
+    } else if (currentActiveViewAs.classList.contains("default-grid")) {
+        libraryContent.className = "library-content default-grid"
     }
 }
