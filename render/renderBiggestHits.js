@@ -15,7 +15,9 @@ export async function renderBiggestHits() {
             <div class="hit-card" data-hit-id="${playlist.id}">
                 <div class="hit-card-cover">
                     <img
-                        src="https://picsum.photos/300"
+                        src="${
+                            playlist.image_url ?? "https://picsum.photos/300"
+                        }"
                         alt="Flowers"
                     />
                     <button class="hit-play-btn">
@@ -24,12 +26,12 @@ export async function renderBiggestHits() {
                 </div>
                 <div class="hit-card-info">
                     <h3 class="hit-card-title">${
-                        playlist.name ? playlist.name : "Không xác định"
-                    }</h3>
-                    <p class="hit-card-artist">${
-                        playlist.user_display_name
+                        playlist.user_username
                             ? playlist.name
                             : "Không xác định"
+                    }</h3>
+                    <p class="hit-card-artist">${
+                        playlist.user_display_name ?? "Không xác định"
                     }</p>
                 </div>
             </div>`

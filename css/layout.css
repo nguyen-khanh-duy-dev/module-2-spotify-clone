@@ -303,6 +303,15 @@
     position: relative;
 }
 
+.create-btn .plus-icon {
+    rotate: 0;
+    transition: rotate ease 0.3s;
+}
+
+.create-btn .plus-icon.active {
+    rotate: 45deg;
+}
+
 .tool-tip.full-screen {
     transform: translateX(-80%);
 }
@@ -436,4 +445,64 @@ hr {
 .view-btn.active {
     background-color: #444;
     color: #00ff88;
+}
+
+.modal-create-playlist {
+    width: 260px;
+    background-color: #181818;
+    border-radius: 8px;
+    padding: 10px 0;
+}
+
+.modal-create-playlist.active {
+    position: absolute;
+    top: 123px;
+    left: 167px;
+    z-index: 1000;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background-color: #282828;
+}
+
+.menu-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 18px;
+    color: white;
+}
+
+.menu-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.menu-desc {
+    font-size: 12px;
+    color: #a7a7a7;
+}
+
+.divider {
+    height: 1px;
+    background-color: #282828;
+    margin: 4px 0;
 }

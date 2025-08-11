@@ -3,7 +3,14 @@ import toast from "./utils/toast.js"
 import { renderBiggestHits } from "./render/renderBiggestHits.js"
 import { renderArtists } from "./render/renderArtists.js"
 import { renderPlaylist } from "./render/renderPlaylist.js"
-import { toolTipSidebar, layoutSelector, renderSidebar } from "./src/sidebar.js"
+import {
+    toolTipSidebar,
+    layoutSelector,
+    renderSidebar,
+    createPlaylist,
+    filterPlaylists,
+    searchPlaylist,
+} from "./src/sidebar.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -201,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault()
             const email = loginForm.querySelector("#loginEmail").value
             const password = loginForm.querySelector("#loginPassword").value
-            const formGroup = loginForm.querySelectorAll(".form-group")
+            // const formGroup = loginForm.querySelectorAll(".form-group")
 
             const credentials = {
                 email,
@@ -310,32 +317,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Sidebar functionality
 document.addEventListener("DOMContentLoaded", async function () {
-    const searchBtn = document.querySelector(".search-library-btn")
-    const searchInput = document.querySelector("#search-library-input")
-    const sortBtn = document.querySelector(".sort-btn")
-
-    searchBtn.addEventListener("click", (e) => {
-        e.preventDefault()
-        searchBtn.style.display = "none"
-        searchInput.classList.add("show")
-        searchInput.focus()
-        sortBtn.innerHTML = '<i class="fas fa-list"></i>'
-    })
-
-    document.addEventListener("click", (e) => {
-        const optionActive = document.querySelector(".option.active")
-
-        if (!searchInput.contains(e.target) && !searchBtn.contains(e.target)) {
-            searchInput.classList.remove("show")
-            searchBtn.style.display = "block"
-
-            sortBtn.innerHTML = `${optionActive.innerText} <i class="fas fa-list"></i>`
-        }
-    })
-
     toolTipSidebar()
     layoutSelector()
-    await renderSidebar()
+    // await renderSidebar()
+
+    createPlaylist()
+    filterPlaylists()
+    searchPlaylist()
 })
 
 // Other functionality
@@ -414,7 +402,7 @@ async function updateCurrentUser(user) {
     const userAvatar = document.querySelector(".user-avatar")
 
     const homeButton = document.querySelector(".home-btn")
-    const logoButton = document.querySelector(".logo")
+    const logoButton = document.querySelector(".logo i")
 
     homeButton.addEventListener("click", (e) => {
         e.preventDefault()

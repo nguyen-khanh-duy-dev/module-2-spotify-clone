@@ -1,5 +1,9 @@
 import httpRequest from "../utils/httpRequest.js"
 
+const searchBtn = document.querySelector(".search-library-btn")
+const searchInput = document.querySelector("#search-library-input")
+const sortBtn = document.querySelector(".sort-btn")
+
 // Function to show tool-tip at sidebar => Xử lý trường hợp có thanh cuộn làm ẩn tool-tip
 //  => Tách riêng tool tip ở đây xuống cuối file html
 export function toolTipSidebar() {
@@ -52,7 +56,7 @@ export function layoutSelector() {
 }
 
 // Render sidebar
-export async function renderSidebar() {
+export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
     const user = localStorage.getItem("user")
     const libraryContent = document.querySelector(".library-content")
     const dropDown = document.querySelector(".dropdown")
@@ -70,27 +74,36 @@ export async function renderSidebar() {
         }
     })
 
+    // Data of my playlist
     if (user) {
-        const userID = JSON.parse(user).id
+        let oriPlaylists = null
+        if (isMyPlaylist) {
+            const { playlists } = await httpRequest.get("me/playlists")
+            valueInput
+                ? (oriPlaylists = playlists.filter((playlist) => {
+                      return playlist.name.toLowerCase().includes(valueInput)
+                  }))
+                : (oriPlaylists = playlists)
+        } else {
+            const { artists } = await httpRequest.get("artists")
+            valueInput
+                ? (oriPlaylists = artists.filter((artist) => {
+                      return artist.name.toLowerCase().includes(valueInput)
+                  }))
+                : (oriPlaylists = artists)
+        }
 
-        const { playlists } = await httpRequest.get(
-            "playlists?limit=50&offset=0"
-        )
-        const myPlaylists = playlists.filter(
-            (playlist) => playlist.user_id === userID
-        )
+        renderMyPlayList(oriPlaylists, libraryContent, isMyPlaylist)
 
-        renderMyPlayList(myPlaylists, libraryContent)
-
-        const sortRecentAdded = [...myPlaylists].sort((a, b) => {
+        const sortRecentAdded = [...oriPlaylists].sort((a, b) => {
             return new Date(b.created_at) - new Date(a.created_at)
         })
-        const sortAlphabetical = [...myPlaylists].sort((a, b) => {
+        const sortAlphabetical = [...oriPlaylists].sort((a, b) => {
             return a.name.localeCompare(b.name)
         })
-        // const sortCreator = [...myPlaylists].sort((a, b) => {
-        //     return a.user_username.localeCompare(b.user_username)
-        // })
+        const sortCreator = [...oriPlaylists].sort((a, b) => {
+            return a.name.localeCompare(b.name)
+        })
         // Cần xử lý dữ liệu khi là null hoặc undefined
 
         optionSort.forEach((option) => {
@@ -108,19 +121,31 @@ export async function renderSidebar() {
 
                 if (currentOptionText === "Recents") {
                     libraryContent.innerHTML = ``
-                    renderMyPlayList(sortRecentAdded, libraryContent)
+                    renderMyPlayList(
+                        sortRecentAdded,
+                        libraryContent,
+                        isMyPlaylist
+                    )
                     updateViewAs(currentActiveViewAs, libraryContent)
 
                     // Sắp xếp này chưa đúng, sau cần sửa lại
                 } else if (currentOptionText === "Recently added") {
                     libraryContent.innerHTML = ``
-                    renderMyPlayList(sortRecentAdded, libraryContent)
+                    renderMyPlayList(
+                        sortRecentAdded,
+                        libraryContent,
+                        isMyPlaylist
+                    )
                     updateViewAs(currentActiveViewAs, libraryContent)
                 } else if (currentOptionText === "Alphabetical") {
-                    renderMyPlayList(sortAlphabetical, libraryContent)
+                    renderMyPlayList(
+                        sortAlphabetical,
+                        libraryContent,
+                        isMyPlaylist
+                    )
                     updateViewAs(currentActiveViewAs, libraryContent)
                 } else if (currentOptionText === "Creator") {
-                    renderMyPlayList(sortAlphabetical, libraryContent)
+                    renderMyPlayList(sortCreator, libraryContent, isMyPlaylist)
                     updateViewAs(currentActiveViewAs, libraryContent)
                     // Sắp xếp này chưa đúng, sau cần sửa lại
                 }
@@ -132,8 +157,10 @@ export async function renderSidebar() {
 }
 
 // Function to render my play list at sidebar
-function renderMyPlayList(myPlaylists, parentElement) {
-    parentElement.innerHTML = `<div class="library-item active">
+function renderMyPlayList(playLists, parentElement, isMyPlaylists = true) {
+    parentElement.textContent = ""
+    if (isMyPlaylists) {
+        parentElement.innerHTML = `<div class="library-item active">
                             <div class="item-icon liked-songs">
                                 <i class="fas fa-heart"></i>
                             </div>
@@ -145,7 +172,8 @@ function renderMyPlayList(myPlaylists, parentElement) {
                                 </div>
                             </div>
                         </div>`
-    const html = myPlaylists
+    }
+    const html = playLists
         .map(
             (playlist) => ` 
                 <div class="library-item">
@@ -159,7 +187,9 @@ function renderMyPlayList(myPlaylists, parentElement) {
                             playlist.name ?? "Không xác định"
                         }</div>
                         <div class="item-subtitle">${
-                            playlist.user_username ?? "Không xác định"
+                            isMyPlaylists
+                                ? playlist.user_username ?? "Không xác định"
+                                : "Artist"
                         }</div>
                     </div>
                 </div>`
@@ -179,4 +209,96 @@ function updateViewAs(currentActiveViewAs, libraryContent) {
     } else if (currentActiveViewAs.classList.contains("default-grid")) {
         libraryContent.className = "library-content default-grid"
     }
+}
+
+// JS for create Btn
+
+export function createPlaylist() {
+    const createBtn = document.querySelector(".create-btn")
+    const plusIcon = createBtn.querySelector("i")
+    const createModal = document.querySelector(".modal-create-playlist")
+
+    const x = createBtn.offsetTop
+    const y = createBtn.offsetLeft
+
+    createBtn.onclick = (e) => {
+        plusIcon.classList.toggle("active")
+        createModal.classList.toggle("active")
+    }
+
+    // close modal when click outside
+    document.addEventListener("click", (e) => {
+        if (!createBtn.contains(e.target) && !createModal.contains(e.target)) {
+            plusIcon.classList.remove("active")
+            createModal.classList.remove("active")
+        }
+    })
+}
+// Nếu đặt trong hàm filterPlaylists thì mỗi lần gọi hàm đó sẽ là true
+// Lưu ý điểm này
+let isMyPlayLists = true
+
+export async function filterPlaylists(valueInput = "") {
+    const navTabs = document.querySelectorAll(".nav-tab")
+    await renderSidebar(isMyPlayLists, valueInput)
+
+    navTabs.forEach((tab) => {
+        tab.onclick = async (e) => {
+            const beforeActive = document.querySelector(".nav-tab.active")
+            beforeActive.classList.remove("active")
+            e.target.classList.add("active")
+            if (e.target.textContent === "Playlists") {
+                isMyPlayLists = true
+            } else {
+                isMyPlayLists = false
+            }
+
+            await renderSidebar(isMyPlayLists, valueInput)
+        }
+    })
+}
+
+export function searchPlaylist() {
+    searchBtn.addEventListener("click", (e) => {
+        e.preventDefault()
+
+        searchBtn.style.display = "none"
+        searchInput.classList.add("show")
+        searchInput.focus()
+        sortBtn.innerHTML = '<i class="fas fa-list"></i>'
+        searchInput.addEventListener("input", async (e) => {
+            const value = e.target.value.toLowerCase()
+
+            await filterPlaylists(value)
+        })
+    })
+
+    document.addEventListener("click", async (e) => {
+        const inputValue = searchInput.value
+        const navTab = document.querySelector(".nav-tabs")
+
+        if (
+            (!searchInput.contains(e.target) &&
+                !searchBtn.contains(e.target) &&
+                !navTab.contains(e.target)) ||
+            (navTab.contains(e.target) && inputValue === "")
+        ) {
+            hideSearch()
+            await filterPlaylists("")
+        } else if (navTab.contains(e.target)) {
+            // Giữ nguyên nếu có giá trị
+            searchBtn.style.display = "none"
+            searchInput.classList.add("show")
+            await filterPlaylists(searchInput.value.toLowerCase())
+        }
+    })
+}
+
+function hideSearch() {
+    const optionActive = document.querySelector(".option.active")
+
+    searchInput.classList.remove("show")
+    searchBtn.style.display = "block"
+    searchInput.value = ""
+    sortBtn.innerHTML = `${optionActive.innerText} <i class="fas fa-list"></i>`
 }
