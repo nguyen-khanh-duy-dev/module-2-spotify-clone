@@ -1,5 +1,6 @@
 import httpRequest from "../utils/httpRequest.js"
 import { renderPlaylist } from "../render/renderPlaylist.js"
+import { showDetailPlaylist } from "../main.js"
 
 const searchBtn = document.querySelector(".search-library-btn")
 const searchInput = document.querySelector("#search-library-input")
@@ -187,9 +188,7 @@ function renderMyPlayList(playLists, parentElement, isMyPlaylists = true) {
             (playlist) => ` 
                 <div class="library-item" data-playlist-id="${playlist.id}">
                     <img
-                        src="${
-                            playlist.image_url ?? "https://picsum.photos/300"
-                        }"
+                        src="${"https://picsum.photos/300"}"
                         alt="${playlist.name ?? "Không xác định"}"
                         class="item-image"
                     />
@@ -315,11 +314,15 @@ function hideSearch() {
 }
 
 export async function showContextMenu() {
-    const navTabs = document.querySelectorAll(".nav-tab")
     const libraryContent = document.querySelector(".library-content")
     const contextMenuPlaylist = document.querySelector(".context-my-playlist")
+    const contextLikedPlaylists = document.querySelector(".liked-playlists")
     const contextMenuMyFollowed = document.querySelector(".context-my-followed")
     const contextMenuArtist = document.querySelector(".context-artist")
+    const likedPlaylist = document
+        .querySelector(".liked-songs")
+        .closest(".library-item")
+        .querySelector(".item-title")
 
     try {
         const { playlists: myPlaylists } = await httpRequest.get("me/playlists")
@@ -329,8 +332,9 @@ export async function showContextMenu() {
 
         libraryContent.addEventListener("contextmenu", (e) => {
             e.preventDefault()
-            const currentID =
-                e.target.closest(".library-item").dataset.playlistId
+            const currentElement = e.target.closest(".library-item")
+            if (!currentElement) return
+            const currentID = currentElement.dataset.playlistId
 
             const isMyPlaylist = myPlaylists.some(
                 (playlist) => playlist.id === currentID
@@ -350,6 +354,18 @@ export async function showContextMenu() {
                         left: `${x}px`,
                         zIndex: 1000,
                     })
+                    contextMenuMyFollowed.classList.remove("show")
+                    contextLikedPlaylists.classList.remove("show")
+                } else if (likedPlaylist.innerText === "Liked Songs") {
+                    contextLikedPlaylists.classList.add("show")
+                    Object.assign(contextLikedPlaylists.style, {
+                        position: "fixed",
+                        top: `${y}px`,
+                        left: `${x}px`,
+                        zIndex: 1000,
+                    })
+                    contextMenuMyFollowed.classList.remove("show")
+                    contextMenuPlaylist.classList.remove("show")
                 } else {
                     contextMenuMyFollowed.classList.add("show")
                     Object.assign(contextMenuMyFollowed.style, {
@@ -358,6 +374,8 @@ export async function showContextMenu() {
                         left: `${x}px`,
                         zIndex: 1000,
                     })
+                    contextLikedPlaylists.classList.remove("show")
+                    contextMenuPlaylist.classList.remove("show")
                 }
             } else if (currentActiveTab.textContent === "Artists") {
                 contextMenuArtist.classList.add("show")
@@ -370,15 +388,17 @@ export async function showContextMenu() {
                 })
             }
         })
+        // Click out side => hide context menu
         document.addEventListener("click", (e) => {
             if (
                 !contextMenuPlaylist.contains(e.target) &&
                 !contextMenuArtist.contains(e.target) &&
                 !contextMenuMyFollowed.contains(e.target)
             ) {
-                contextMenuPlaylist.classList.remove("show")
                 contextMenuArtist.classList.remove("show")
+                contextMenuPlaylist.classList.remove("show")
                 contextMenuMyFollowed.classList.remove("show")
+                contextLikedPlaylists.classList.remove("show")
             }
         })
     } catch (error) {
@@ -386,8 +406,23 @@ export async function showContextMenu() {
     }
 }
 
-const isArtist = true
+let isArtist = true
 
-function renderDetailPlaylist() {}
+export function renderDetailPlaylist() {
+    const libraryContent = document.querySelector(".library-content")
+    libraryContent.addEventListener("click", (e) => {
+        const currentTab = document.querySelector(".nav-tab.active")
+        currentTab.textContent === "Playlists"
+            ? (isArtist = false)
+            : (isArtist = true)
+        const currentPlaylistID =
+            e.target.closest(".library-item").dataset.playlistId
+
+        if (currentPlaylistID) {
+            renderPlaylist(currentPlaylistID, isArtist)
+            showDetailPlaylist()
+        }
+    })
+}
 
 function editDetailMyPlaylist(currentPlaylist) {}

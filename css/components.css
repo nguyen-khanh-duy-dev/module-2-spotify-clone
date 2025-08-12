@@ -448,6 +448,44 @@
     margin-bottom: var(--spacing-2xl);
 }
 
+.extra-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.extra-controls button {
+    background: none;
+    border: 1px solid #888;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    color: #ccc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.extra-controls button:hover {
+    border-color: #fff;
+    color: #fff;
+}
+
+.shuffle-btn.active {
+    color: #1db954;
+    border-color: #1db954;
+}
+
+.add-btn.active {
+    background-color: #1db954; /* xanh Spotify */
+    color: white;
+    border-color: #1db954;
+}
+/* End */
+
 .play-btn-large {
     width: 56px;
     height: 56px;

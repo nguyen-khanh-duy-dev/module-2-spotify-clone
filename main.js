@@ -11,6 +11,7 @@ import {
     filterPlaylists,
     searchPlaylist,
     showContextMenu,
+    renderDetailPlaylist,
 } from "./src/sidebar.js"
 import "./src/context-menu-app.js"
 
@@ -348,6 +349,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     detailArtistPlaylist(isArtist)
     detailBiggestHitsPlaylist(isArtist)
     showContextMenu()
+    // Render from sidebar
+    renderDetailPlaylist()
 })
 
 // Function to show detail Play list of Artist
@@ -358,11 +361,7 @@ function detailArtistPlaylist(isArtist) {
         card.onclick = async (e) => {
             const artistId = e.currentTarget.dataset.artistId
             if (artistId) {
-                
-                await renderPlaylist(
-                    artistId,
-                    isArtist
-                )
+                await renderPlaylist(artistId, isArtist)
             }
             showDetailPlaylist()
         }
@@ -377,11 +376,7 @@ function detailBiggestHitsPlaylist(isArtist) {
         card.onclick = async (e) => {
             const hitID = e.currentTarget.dataset.hitId
             if (hitID) {
-                
-                await renderPlaylist(
-                    hitID,
-                    isArtist
-                )
+                await renderPlaylist(hitID, isArtist)
             }
             showDetailPlaylist()
         }
@@ -435,7 +430,7 @@ async function getTracks() {
     }
 }
 
-function showDetailPlaylist() {
+export function showDetailPlaylist() {
     const detailPlaylist = document.querySelector(".detail-playlist")
     const hitSection = document.querySelector(".hits-section")
     const artistSection = document.querySelector(".artists-section")

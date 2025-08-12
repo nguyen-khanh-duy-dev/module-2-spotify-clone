@@ -312,6 +312,21 @@
                             <button class="play-btn-large">
                                 <i class="fas fa-play"></i>
                             </button>
+                            <div class="extra-controls">
+                                <button class="shuffle-btn active">
+                                    <i class="fas fa-random"></i>
+                                </button>
+                                <button class="add-btn">
+                                    <i class="fas fa-plus"></i>
+                                    <!-- active => fa-check -->
+                                </button>
+                                <button class="download-btn">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="more-btn">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
                         </section>
 
                         <!-- Popular Tracks -->
@@ -617,6 +632,9 @@
                 </div>
             </div>
         </div>
+        <context-menu-app class="liked-playlists">
+            <li class="menu-item">Unpin playlist</li>
+        </context-menu-app>
         <context-menu-app class="context-my-followed">
             <li class="menu-item">Remove from profile</li>
             <li class="menu-item">Create playlist</li>

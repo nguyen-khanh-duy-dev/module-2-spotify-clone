@@ -509,12 +509,14 @@ hr {
 
 /* Context menu */
 .context-my-playlist,
-.context-my-followed {
+.context-my-followed,
+.liked-playlists {
     display: none;
 }
 
 .context-my-playlist.show,
-.context-my-followed.show {
+.context-my-followed.show,
+.liked-playlists.show {
     display: block;
 }
 
