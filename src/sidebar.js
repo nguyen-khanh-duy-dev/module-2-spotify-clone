@@ -1,4 +1,5 @@
 import httpRequest from "../utils/httpRequest.js"
+import { renderPlaylist } from "../render/renderPlaylist.js"
 
 const searchBtn = document.querySelector(".search-library-btn")
 const searchInput = document.querySelector("#search-library-input")
@@ -74,16 +75,24 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
         }
     })
 
-    // Data of my playlist
+    // Data of my playlist: my playlist + my followed
     if (user) {
         let oriPlaylists = null
         if (isMyPlaylist) {
-            const { playlists } = await httpRequest.get("me/playlists")
+            const { playlists: myPlaylists } = await httpRequest.get(
+                "me/playlists"
+            )
+            const { playlists: myFollowedPlaylist } = await httpRequest.get(
+                "me/playlists/followed"
+            )
+
+            const allMyPlaylists = [...myPlaylists, ...myFollowedPlaylist]
+
             valueInput
-                ? (oriPlaylists = playlists.filter((playlist) => {
+                ? (oriPlaylists = allMyPlaylists.filter((playlist) => {
                       return playlist.name.toLowerCase().includes(valueInput)
                   }))
-                : (oriPlaylists = playlists)
+                : (oriPlaylists = allMyPlaylists)
         } else {
             const { artists } = await httpRequest.get("artists")
             valueInput
@@ -176,9 +185,11 @@ function renderMyPlayList(playLists, parentElement, isMyPlaylists = true) {
     const html = playLists
         .map(
             (playlist) => ` 
-                <div class="library-item">
+                <div class="library-item" data-playlist-id="${playlist.id}">
                     <img
-                        src="${"https://picsum.photos/300"}"
+                        src="${
+                            playlist.image_url ?? "https://picsum.photos/300"
+                        }"
                         alt="${playlist.name ?? "Không xác định"}"
                         class="item-image"
                     />
@@ -302,3 +313,81 @@ function hideSearch() {
     searchInput.value = ""
     sortBtn.innerHTML = `${optionActive.innerText} <i class="fas fa-list"></i>`
 }
+
+export async function showContextMenu() {
+    const navTabs = document.querySelectorAll(".nav-tab")
+    const libraryContent = document.querySelector(".library-content")
+    const contextMenuPlaylist = document.querySelector(".context-my-playlist")
+    const contextMenuMyFollowed = document.querySelector(".context-my-followed")
+    const contextMenuArtist = document.querySelector(".context-artist")
+
+    try {
+        const { playlists: myPlaylists } = await httpRequest.get("me/playlists")
+        const { playlists: myFollowedPlaylist } = await httpRequest.get(
+            "me/playlists/followed"
+        )
+
+        libraryContent.addEventListener("contextmenu", (e) => {
+            e.preventDefault()
+            const currentID =
+                e.target.closest(".library-item").dataset.playlistId
+
+            const isMyPlaylist = myPlaylists.some(
+                (playlist) => playlist.id === currentID
+            )
+
+            const x = e.clientX
+            const y = e.clientY
+            const currentActiveTab = document.querySelector(".nav-tab.active")
+
+            if (currentActiveTab.textContent === "Playlists") {
+                // Nếu là myplaylist => Có thể edit và xóa
+                if (isMyPlaylist) {
+                    contextMenuPlaylist.classList.add("show")
+                    Object.assign(contextMenuPlaylist.style, {
+                        position: "fixed",
+                        top: `${y}px`,
+                        left: `${x}px`,
+                        zIndex: 1000,
+                    })
+                } else {
+                    contextMenuMyFollowed.classList.add("show")
+                    Object.assign(contextMenuMyFollowed.style, {
+                        position: "fixed",
+                        top: `${y}px`,
+                        left: `${x}px`,
+                        zIndex: 1000,
+                    })
+                }
+            } else if (currentActiveTab.textContent === "Artists") {
+                contextMenuArtist.classList.add("show")
+
+                Object.assign(contextMenuArtist.style, {
+                    position: "fixed",
+                    top: `${y}px`,
+                    left: `${x}px`,
+                    zIndex: 1000,
+                })
+            }
+        })
+        document.addEventListener("click", (e) => {
+            if (
+                !contextMenuPlaylist.contains(e.target) &&
+                !contextMenuArtist.contains(e.target) &&
+                !contextMenuMyFollowed.contains(e.target)
+            ) {
+                contextMenuPlaylist.classList.remove("show")
+                contextMenuArtist.classList.remove("show")
+                contextMenuMyFollowed.classList.remove("show")
+            }
+        })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const isArtist = true
+
+function renderDetailPlaylist() {}
+
+function editDetailMyPlaylist(currentPlaylist) {}

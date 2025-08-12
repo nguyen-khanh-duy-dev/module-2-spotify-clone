@@ -10,7 +10,9 @@ import {
     createPlaylist,
     filterPlaylists,
     searchPlaylist,
+    showContextMenu,
 } from "./src/sidebar.js"
+import "./src/context-menu-app.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -345,6 +347,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     detailArtistPlaylist(isArtist)
     detailBiggestHitsPlaylist(isArtist)
+    showContextMenu()
 })
 
 // Function to show detail Play list of Artist
@@ -355,13 +358,9 @@ function detailArtistPlaylist(isArtist) {
         card.onclick = async (e) => {
             const artistId = e.currentTarget.dataset.artistId
             if (artistId) {
-                const artistHero = document.querySelector(".artist-hero")
-                const playlistSection =
-                    document.querySelector(".popular-section")
+                
                 await renderPlaylist(
                     artistId,
-                    artistHero,
-                    playlistSection,
                     isArtist
                 )
             }
@@ -378,13 +377,9 @@ function detailBiggestHitsPlaylist(isArtist) {
         card.onclick = async (e) => {
             const hitID = e.currentTarget.dataset.hitId
             if (hitID) {
-                const artistHero = document.querySelector(".artist-hero")
-                const playlistSection =
-                    document.querySelector(".popular-section")
+                
                 await renderPlaylist(
                     hitID,
-                    artistHero,
-                    playlistSection,
                     isArtist
                 )
             }

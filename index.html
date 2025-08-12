@@ -617,7 +617,60 @@
                 </div>
             </div>
         </div>
+        <context-menu-app class="context-my-followed">
+            <li class="menu-item">Remove from profile</li>
+            <li class="menu-item">Create playlist</li>
+        </context-menu-app>
+        <context-menu-app class="context-my-playlist">
+            <li class="menu-item">Edit details</li>
+            <li class="menu-item delete">Delete</li>
+            <li class="menu-item">Create playlist</li>
+        </context-menu-app>
+        <context-menu-app class="context-artist">
+            <li class="menu-item">Unfollow</li>
+        </context-menu-app>
 
+        <template id="context-menu-template">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                .context-menu {
+                    background-color: #282828;
+                    color: #fff;
+                    border-radius: 4px;
+                    min-width: 200px;
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+                    font-size: 14px;
+                }
+
+                .context-menu ul {
+                    list-style: none;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                .menu-item {
+                    padding: 8px 8px;
+                    cursor: pointer;
+                }
+
+                .menu-item:hover {
+                    background-color: #5f5e5e;
+                }
+
+                .menu-item.delete {
+                    color: #f15e5e;
+                }
+            </style>
+            <div class="context-menu">
+                <ul>
+                    <slot></slot>
+                </ul>
+            </div>
+        </template>
         <div class="context-me"></div>
         <script src="main.js" type="module"></script>
     </body>

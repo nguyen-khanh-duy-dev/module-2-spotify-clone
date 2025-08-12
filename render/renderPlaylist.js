@@ -1,12 +1,9 @@
 import httpRequest from "../utils/httpRequest.js"
 import { convertTime } from "../utils/convertTime.js"
 
-export async function renderPlaylist(
-    id,
-    artistHeroEl,
-    playlistSection,
-    isArtist
-) {
+const artistHero = document.querySelector(".artist-hero")
+const playlistSection = document.querySelector(".popular-section")
+export async function renderPlaylist(id, isArtist) {
     const trackItems = playlistSection.querySelectorAll(".track-item")
     const trackList = playlistSection.querySelector(".track-list")
     try {
@@ -44,7 +41,7 @@ export async function renderPlaylist(
                 </p>
             </div>
             `
-            artistHeroEl.innerHTML = artistHeroHtml
+            artistHero.innerHTML = artistHeroHtml
         } else {
             const getPlaylist = await httpRequest.get(`playlists/${id}`)
 
@@ -78,7 +75,7 @@ export async function renderPlaylist(
                 </p>
             </div>
             `
-            artistHeroEl.innerHTML = detailHeroHtml
+            artistHero.innerHTML = detailHeroHtml
         }
 
         const html = trackFit
@@ -88,7 +85,7 @@ export async function renderPlaylist(
                 <div class="track-number">1</div>
                 <div class="track-image">
                     <img
-                        src="https://picsum.photos/300"
+                        src="${track.image_url}"
                         alt="${track.title ?? "Unknown Track"}"
                     />
                 </div>
