@@ -26,9 +26,7 @@ export async function renderBiggestHits() {
                 </div>
                 <div class="hit-card-info">
                     <h3 class="hit-card-title">${
-                        playlist.user_username
-                            ? playlist.name
-                            : "Không xác định"
+                        playlist.name ?? "Không xác định"
                     }</h3>
                     <p class="hit-card-artist">${
                         playlist.user_display_name ?? "Không xác định"

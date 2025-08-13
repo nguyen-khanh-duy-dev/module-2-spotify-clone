@@ -1,6 +1,7 @@
 import httpRequest from "../utils/httpRequest.js"
 import { renderPlaylist } from "../render/renderPlaylist.js"
 import { showDetailPlaylist } from "../main.js"
+import { renderDetailCreate } from "../render/render-detail-create.js"
 
 const searchBtn = document.querySelector(".search-library-btn")
 const searchInput = document.querySelector("#search-library-input")
@@ -70,6 +71,8 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
             const beforeViewAsActive =
                 document.querySelector(".view-btn.active")
             e.currentTarget.classList.add("active")
+            if (beforeViewAsActive === e.currentTarget) return
+
             beforeViewAsActive.classList.remove("active")
 
             updateViewAs(e.currentTarget, libraryContent)
@@ -78,6 +81,14 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
 
     // Data of my playlist: my playlist + my followed
     if (user) {
+        const followArtist = await httpRequest.put(
+            "artists/550e8400-e29b-41d4-a716-446655440001/follow"
+        )
+
+        const list = await httpRequest.get(
+            "me/playlists/followed?limit=20&offset=0"
+        )
+
         let oriPlaylists = null
         if (isMyPlaylist) {
             const { playlists: myPlaylists } = await httpRequest.get(
@@ -123,6 +134,7 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
                 const currentActiveViewAs =
                     document.querySelector(".view-btn.active")
 
+                if (beforeOptionActive === e.currentTarget) return
                 beforeOptionActive.classList.remove("active")
                 e.currentTarget.classList.add("active")
 
@@ -188,7 +200,9 @@ function renderMyPlayList(playLists, parentElement, isMyPlaylists = true) {
             (playlist) => ` 
                 <div class="library-item" data-playlist-id="${playlist.id}">
                     <img
-                        src="${"https://picsum.photos/300"}"
+                        src="${
+                            playlist.image_url ?? "https://picsum.photos/300"
+                        }"
                         alt="${playlist.name ?? "Không xác định"}"
                         class="item-image"
                     />
@@ -198,7 +212,7 @@ function renderMyPlayList(playLists, parentElement, isMyPlaylists = true) {
                         }</div>
                         <div class="item-subtitle">${
                             isMyPlaylists
-                                ? playlist.user_username ?? "Không xác định"
+                                ? playlist.user_display_name ?? "Không xác định"
                                 : "Artist"
                         }</div>
                     </div>
@@ -272,10 +286,14 @@ export function searchPlaylist() {
     searchBtn.addEventListener("click", (e) => {
         e.preventDefault()
 
+        const viewAsActive = document
+            .querySelector(".view-btn.active")
+            .querySelector("i").className
+
         searchBtn.style.display = "none"
         searchInput.classList.add("show")
         searchInput.focus()
-        sortBtn.innerHTML = '<i class="fas fa-list"></i>'
+        sortBtn.innerHTML = `<i class="${viewAsActive}"></i>`
         searchInput.addEventListener("input", async (e) => {
             const value = e.target.value.toLowerCase()
 
@@ -306,11 +324,14 @@ export function searchPlaylist() {
 
 function hideSearch() {
     const optionActive = document.querySelector(".option.active")
+    const viewAsActive = document
+        .querySelector(".view-btn.active")
+        .querySelector("i").className
 
     searchInput.classList.remove("show")
     searchBtn.style.display = "block"
     searchInput.value = ""
-    sortBtn.innerHTML = `${optionActive.innerText} <i class="fas fa-list"></i>`
+    sortBtn.innerHTML = `${optionActive.innerText} <i class="${viewAsActive}"></i>`
 }
 
 export async function showContextMenu() {
@@ -425,4 +446,94 @@ export function renderDetailPlaylist() {
     })
 }
 
-function editDetailMyPlaylist(currentPlaylist) {}
+export function createNewPlaylist() {
+    const menuItems = document.querySelectorAll(".menu-item")
+    const detailCreate = document.querySelector(".detail-create")
+    const credentials = {
+        name: "My Playlist",
+        description: "Playlist description",
+        is_public: true,
+        image_url: "https://example.com/playlist-cover.jpg",
+    }
+    menuItems.forEach((item) => {
+        item.onclick = async (e) => {
+            const isCreatePlaylist =
+                e.currentTarget.dataset.type === "create-playlist"
+            if (isCreatePlaylist) {
+                const { playlist } = await httpRequest.post(
+                    "playlists",
+                    credentials
+                )
+                const playlistID = playlist.id
+                const html = renderDetailCreate(playlist)
+                detailCreate.innerHTML = html
+                showDetailCreate()
+                renderSidebar()
+
+                showEditPlaylist()
+            }
+        }
+    })
+}
+
+function showDetailCreate() {
+    const detailCreate = document.querySelector(".detail-create")
+    const detailPlaylist = document.querySelector(".detail-playlist")
+    const artistSection = document.querySelector(".artists-section")
+    const modalCreate = document.querySelector(".modal-create-playlist")
+    const iconCreate = document.querySelector(".create-btn .plus-icon")
+    console.log(iconCreate)
+
+    detailCreate.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    })
+    detailCreate.classList.add("show")
+    modalCreate.classList.remove("active")
+    iconCreate.classList.remove("active")
+    detailPlaylist.classList.remove("show")
+}
+
+export function showEditPlaylist() {
+    let fileImage = null
+    const detailCreate = document.querySelector(".detail-create")
+    const name = detailCreate.querySelector(".name")
+    const cover = detailCreate.querySelector(".cover")
+    const editInfoPlaylist = document.querySelector(".edit-info-playlist")
+    const playlistName =
+        editInfoPlaylist.shadowRoot.querySelector("#playlist-name")
+    const saveBtn = editInfoPlaylist.shadowRoot.querySelector(".save-btn")
+    const imageUpload =
+        editInfoPlaylist.shadowRoot.querySelector(".image-upload")
+    const inputUpload =
+        editInfoPlaylist.shadowRoot.querySelector(".input-upload")
+
+    name.onclick = (e) => {
+        editInfoPlaylist.classList.add("show")
+        playlistName.addEventListener("focus", (e) => e.target.select())
+    }
+
+    cover.onclick = (e) => {
+        editInfoPlaylist.classList.add("show")
+        inputUpload.click()
+        inputUpload.addEventListener("change", () => {
+            fileImage = inputUpload.files[0] // File được chọn
+        })
+    }
+
+    imageUpload.onclick = (e) => {
+        inputUpload.click()
+        inputUpload.addEventListener("change", () => {
+            fileImage = inputUpload.files[0] // File được chọn
+        })
+    }
+
+    cover.addEventListener("mouseover", (e) => {})
+
+    cover.addEventListener("mouseout", (e) => {})
+
+    saveBtn.addEventListener("click", (e) => {
+        const textName = playlistName.value
+        console.log(fileImage, textName)
+    })
+}

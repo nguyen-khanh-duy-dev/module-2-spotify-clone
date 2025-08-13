@@ -12,8 +12,11 @@ import {
     searchPlaylist,
     showContextMenu,
     renderDetailPlaylist,
+    createNewPlaylist,
+    showEditPlaylist,
 } from "./src/sidebar.js"
 import "./src/context-menu-app.js"
+import "./src/edit-detail-app.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -327,6 +330,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     createPlaylist()
     filterPlaylists()
     searchPlaylist()
+    createNewPlaylist()
 })
 
 // Other functionality
@@ -434,6 +438,7 @@ export function showDetailPlaylist() {
     const detailPlaylist = document.querySelector(".detail-playlist")
     const hitSection = document.querySelector(".hits-section")
     const artistSection = document.querySelector(".artists-section")
+    const detailCreate = document.querySelector(".detail-create")
 
     detailPlaylist.scrollTo({
         top: 0,
@@ -442,4 +447,5 @@ export function showDetailPlaylist() {
     detailPlaylist.classList.add("show")
     hitSection.style.display = "none"
     artistSection.style.display = "none"
+    detailCreate.classList.remove("show")
 }

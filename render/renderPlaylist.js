@@ -22,7 +22,9 @@ export async function renderPlaylist(id, isArtist) {
         const heroSectionHtml = `
             <div class="hero-background">
                 <img
-                    src="${"https://picsum.photos/300"}"
+                    src="${
+                        detailPlaylist.image_url ?? "https://picsum.photos/300"
+                    }"
                     alt="${detailPlaylist.name} artist background"
                     class="hero-image"
                 />
@@ -81,7 +83,7 @@ export async function renderPlaylist(id, isArtist) {
                 <div class="track-number">1</div>
                 <div class="track-image">
                     <img
-                        src="${"https://picsum.photos/300"}"
+                        src="${track.image_url ?? "https://picsum.photos/300"}"
                         alt="${track.title ?? "Unknown Track"}"
                     />
                 </div>
