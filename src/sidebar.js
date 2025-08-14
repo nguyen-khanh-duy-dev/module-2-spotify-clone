@@ -470,7 +470,7 @@ export function createNewPlaylist() {
                 showDetailCreate()
                 renderSidebar()
 
-                showEditPlaylist()
+                showEditPlaylist(playlistID)
             }
         }
     })
@@ -482,7 +482,7 @@ function showDetailCreate() {
     const artistSection = document.querySelector(".artists-section")
     const modalCreate = document.querySelector(".modal-create-playlist")
     const iconCreate = document.querySelector(".create-btn .plus-icon")
-    console.log(iconCreate)
+    const hitsSection = document.querySelector(".hits-section")
 
     detailCreate.scrollTo({
         top: 0,
@@ -492,48 +492,171 @@ function showDetailCreate() {
     modalCreate.classList.remove("active")
     iconCreate.classList.remove("active")
     detailPlaylist.classList.remove("show")
+    artistSection.style.display = "none"
+    hitsSection.style.display = "none"
 }
 
-export function showEditPlaylist() {
-    let fileImage = null
+export function showEditPlaylist(playlistID) {
+    let finalImage = null
+    let finalName = null
+    let finalDesc = null
+
     const detailCreate = document.querySelector(".detail-create")
-    const name = detailCreate.querySelector(".name")
+    const nameInputElement = detailCreate.querySelector(".name")
     const cover = detailCreate.querySelector(".cover")
+    const iconCover = cover.querySelector("i")
     const editInfoPlaylist = document.querySelector(".edit-info-playlist")
+
     const playlistName =
         editInfoPlaylist.shadowRoot.querySelector("#playlist-name")
+    const playlistDesc = editInfoPlaylist.shadowRoot.querySelector("#desc")
     const saveBtn = editInfoPlaylist.shadowRoot.querySelector(".save-btn")
     const imageUpload =
         editInfoPlaylist.shadowRoot.querySelector(".image-upload")
+    const iconUploadImage = imageUpload.querySelector("i")
+    console.log(iconUploadImage)
+
     const inputUpload =
         editInfoPlaylist.shadowRoot.querySelector(".input-upload")
+    const closeIcon = editInfoPlaylist.shadowRoot.querySelector(".close-icon")
 
-    name.onclick = (e) => {
-        editInfoPlaylist.classList.add("show")
+    nameInputElement.onclick = () => {
+        editInfoPlaylist.className = "edit-info-playlist show"
+        playlistName.value = nameInputElement.textContent.trim()
         playlistName.addEventListener("focus", (e) => e.target.select())
+        playlistName.focus()
     }
 
     cover.onclick = (e) => {
         editInfoPlaylist.classList.add("show")
         inputUpload.click()
-        inputUpload.addEventListener("change", () => {
-            fileImage = inputUpload.files[0] // File được chọn
-        })
+        playlistName.value = nameInputElement.textContent.trim()
+        playlistName.addEventListener("focus", (e) => e.target.select())
+        playlistName.focus()
     }
 
-    imageUpload.onclick = (e) => {
+    iconUploadImage.onclick = (e) => {
         inputUpload.click()
         inputUpload.addEventListener("change", () => {
-            fileImage = inputUpload.files[0] // File được chọn
+            finalImage = inputUpload.files[0] // File được chọn
         })
     }
 
-    cover.addEventListener("mouseover", (e) => {})
+    iconUploadImage.onclick = (e) => {
+        inputUpload.click()
+    }
+    imageUpload.onclick = () => {
+        inputUpload.click()
+    }
 
-    cover.addEventListener("mouseout", (e) => {})
+    imageUpload.onclick = () => {}
 
-    saveBtn.addEventListener("click", (e) => {
-        const textName = playlistName.value
-        console.log(fileImage, textName)
+    iconCover.addEventListener("mouseover", (e) => {
+        iconCover.className = "fa-solid fa-pen"
     })
+
+    iconCover.addEventListener("mouseout", (e) => {
+        iconCover.className = "fas fa-music"
+    })
+
+    iconUploadImage.addEventListener("mouseover", (e) => {
+        e.target.classList.remove("fa-music")
+        e.target.classList.add("fa-pen")
+    })
+    iconUploadImage.addEventListener("mouseout", (e) => {
+        e.target.classList.add("fa-music")
+        e.target.classList.remove("fa-pen")
+    })
+
+    inputUpload.addEventListener("change", () => {
+        if (inputUpload.files.length > 0) {
+            finalImage = inputUpload.files[0]
+
+            // Xóa icon cũ nếu có
+            imageUpload.innerHTML = ""
+
+            // Thêm ảnh preview
+            const imgPreview = document.createElement("img")
+            imgPreview.className = "preview-image"
+            imgPreview.src = URL.createObjectURL(finalImage)
+
+            // Thêm overlay icon pen
+            const iconOverlay = document.createElement("i")
+            iconOverlay.className = "fa-solid fa-pen icon-upload"
+
+            imageUpload.appendChild(imgPreview)
+            imageUpload.appendChild(iconOverlay)
+
+            // Thêm class để CSS hover icon pen
+            imageUpload.classList.add("has-image")
+        }
+    })
+    let hasUpdated = false
+    saveBtn.addEventListener("click", async (e) => {
+        hasUpdated = true
+        const textName = playlistName.value
+        finalName = textName
+        finalDesc = playlistDesc.value
+        playlistName.value = ""
+        editInfoPlaylist.classList.remove("show")
+        let linkImg = null
+        if (finalName) {
+            if (finalImage) {
+                const file = await uploadImage(finalImage, playlistID)
+                linkImg = `https://spotify.f8team.dev${file.url}`
+            }
+        }
+        const name = finalName
+        const description = finalDesc
+        const is_public = true
+        const image_url = linkImg
+        const credentials = {
+            name,
+            description,
+            is_public,
+            image_url,
+        }
+        console.log(credentials, playlistID)
+
+        try {
+            const { playlist } = await httpRequest.put(
+                `playlists/${playlistID}`,
+                credentials
+            )
+            const html = renderDetailCreate(playlist, hasUpdated)
+            detailCreate.innerHTML = html
+            
+            renderSidebar()
+        } catch (error) {
+            console.log(error)
+        }
+    })
+
+    closeIcon.addEventListener("click", (e) => {
+        editInfoPlaylist.classList.remove("show")
+        inputUpload.value = ""
+        playlistName.value = ""
+    })
+
+    document.addEventListener("click", (e) => {
+        if (
+            !editInfoPlaylist.contains(e.target) &&
+            !nameInputElement.contains(e.target) &&
+            !cover.contains(e.target)
+        ) {
+            editInfoPlaylist.classList.remove("show")
+            inputUpload.value = ""
+            playlistName.value = ""
+        }
+    })
+}
+
+async function uploadImage(fileImage, playlistID) {
+    const formData = new FormData()
+    formData.append("cover", fileImage, `${fileImage.name}`)
+    const { file } = await httpRequest.post(
+        `upload/playlist/${playlistID}/cover`,
+        formData
+    )
+    return file
 }

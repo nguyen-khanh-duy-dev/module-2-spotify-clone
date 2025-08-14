@@ -9,10 +9,14 @@ class HttpRequest {
                 method,
                 headers: {
                     ...options.headers,
-                    "Content-Type": "application/json",
+                    // "Content-Type": "application/json",
                 },
             }
-            if (data) {
+            if (data instanceof FormData) {
+                _options.body = data
+                // Không set Content-Type — browser tự set
+            } else if (data) {
+                _options.headers["Content-Type"] = "application/json"
                 _options.body = JSON.stringify(data)
             }
 

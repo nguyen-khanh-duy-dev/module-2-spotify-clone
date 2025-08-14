@@ -650,8 +650,9 @@
         <context-menu-app class="context-artist">
             <li class="menu-item">Unfollow</li>
         </context-menu-app>
+        <style></style>
 
-        <edit-detail-app class="edit-info-playlist show"></edit-detail-app>
+        <edit-detail-app class="edit-info-playlist"></edit-detail-app>
 
         <template id="context-menu-template">
             <style>
@@ -697,6 +698,9 @@
 
         <template id="edit-details-template">
             <style>
+                /* @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"); */
+                @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
                 .modal {
                     background-color: #181818;
                     color: white;
@@ -705,9 +709,25 @@
                     width: 400px;
                     font-family: Arial, sans-serif;
                 }
+
+                .sub-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                }
+                .sub-header .close-icon {
+                    padding: 3px;
+                    cursor: pointer;
+                }
                 h2 {
                     margin-top: 0;
                     font-size: 20px;
+                }
+
+                .image-upload {
+                    cursor: pointer;
+                    position: relative;
+                    z-index: 1000;
                 }
                 .form-group {
                     margin-bottom: 15px;
@@ -731,6 +751,7 @@
                     border-radius: 4px;
                     color: white;
                     font-size: 14px;
+                    resize: vertical;
                 }
                 input:focus,
                 textarea:focus {
@@ -747,6 +768,40 @@
                     font-size: 40px;
                     color: #b3b3b3;
                     margin-bottom: 15px;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .image-upload.has-image .icon-upload {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 24px;
+                    color: white;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    padding: 6px;
+                    /* border-radius: 50%; */
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+
+                .image-upload.has-image:hover .icon-upload {
+                    opacity: 1;
+                }
+
+                .preview-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .icon-upload {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
                 .save-btn {
                     background-color: white;
@@ -770,9 +825,16 @@
             </style>
 
             <div class="modal">
-                <h2>Edit details</h2>
+                <div class="sub-header">
+                    <h2>Edit details</h2>
+                    <i class="fa-solid fa-xmark close-icon"></i>
+                </div>
                 <div class="header">
-                    <div class="image-upload">🎵</div>
+                    <div class="image-upload">
+                        <img class="preview-image" style="display: none" />
+                        <i class="fas fa-music icon-upload"></i>
+                    </div>
+
                     <input
                         class="input-upload"
                         style="display: none"
@@ -791,6 +853,7 @@
                         </div>
                         <div class="form-group">
                             <textarea
+                                id="desc"
                                 placeholder="Add an optional description"
                             ></textarea>
                         </div>

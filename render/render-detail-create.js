@@ -1,15 +1,32 @@
-export function renderDetailCreate(newPlaylist) {
+export function renderDetailCreate(newPlaylist, hasUpdated = false) {
+    console.log(newPlaylist, hasUpdated)
+
     const currentNumberPlaylist = newPlaylist.name.split("#")[1]
-    const ownerPlaylist = localStorage.getItem("user").display_name ?? "Duy"
+    const ownerPlaylist = localStorage.getItem("user").display_name ?? "Duyyyyy"
     const html = `
     <!-- Playlist Header -->
         <div class="header">
             <div class="cover">
-                <i class="fas fa-music"></i>
+                ${
+                    hasUpdated
+                        ? `<img src="${newPlaylist.image_url}" alt="cover image">`
+                        : '<i class="fas fa-music"></i>'
+                }
             </div>
             <div class="info">
-                <p class="type">Public Playlist</p>
-                <h1 class="name">My Playlist #${currentNumberPlaylist}</h1>
+                <p class="type">${
+                    newPlaylist.is_public
+                        ? "Public Playlist"
+                        : "Private Playlist"
+                }</p>
+                <h1 class="name">${
+                    hasUpdated
+                        ? newPlaylist.name
+                        : `#My Playlist ${currentNumberPlaylist}`
+                }</h1>
+                <span class="desc">${
+                    hasUpdated ? newPlaylist.description : ""
+                }</span>
                 <p class="owner">${ownerPlaylist}</p>
             </div>
         </div>
