@@ -1,7 +1,6 @@
 import httpRequest from "../utils/httpRequest.js"
-import { renderPlaylist } from "../render/renderPlaylist.js"
-import { showDetailPlaylist } from "../main.js"
-import { renderDetailCreate } from "../render/render-detail-create.js"
+import toast from "../utils/toast.js"
+let hasUpdated = false
 
 const searchBtn = document.querySelector(".search-library-btn")
 const searchInput = document.querySelector("#search-library-input")
@@ -81,14 +80,6 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
 
     // Data of my playlist: my playlist + my followed
     if (user) {
-        const followArtist = await httpRequest.put(
-            "artists/550e8400-e29b-41d4-a716-446655440001/follow"
-        )
-
-        const list = await httpRequest.get(
-            "me/playlists/followed?limit=20&offset=0"
-        )
-
         let oriPlaylists = null
         if (isMyPlaylist) {
             const { playlists: myPlaylists } = await httpRequest.get(
@@ -106,7 +97,11 @@ export async function renderSidebar(isMyPlaylist = true, valueInput = "") {
                   }))
                 : (oriPlaylists = allMyPlaylists)
         } else {
-            const { artists } = await httpRequest.get("artists")
+            const { artists } = await httpRequest.get(
+                "me/following?limit=20&offset=0"
+            )
+            console.log(artists)
+
             valueInput
                 ? (oriPlaylists = artists.filter((artist) => {
                       return artist.name.toLowerCase().includes(valueInput)
@@ -340,10 +335,14 @@ export async function showContextMenu() {
     const contextLikedPlaylists = document.querySelector(".liked-playlists")
     const contextMenuMyFollowed = document.querySelector(".context-my-followed")
     const contextMenuArtist = document.querySelector(".context-artist")
+    const modalApp = document.querySelector(".modal-app")
+    const btnModal = modalApp.shadowRoot.querySelectorAll(".btn")
+
     const likedPlaylist = document
         .querySelector(".liked-songs")
         .closest(".library-item")
         .querySelector(".item-title")
+    console.log(likedPlaylist)
 
     try {
         const { playlists: myPlaylists } = await httpRequest.get("me/playlists")
@@ -360,6 +359,7 @@ export async function showContextMenu() {
             const isMyPlaylist = myPlaylists.some(
                 (playlist) => playlist.id === currentID
             )
+            console.log(currentID)
 
             const x = e.clientX
             const y = e.clientY
@@ -377,6 +377,73 @@ export async function showContextMenu() {
                     })
                     contextMenuMyFollowed.classList.remove("show")
                     contextLikedPlaylists.classList.remove("show")
+
+                    const deleteEl = document.querySelector(".menu-item.delete")
+                    const editBtn = document.querySelector(".menu-item.edit")
+                    const createBtn =
+                        document.querySelector(".menu-item.create")
+                    deleteEl.onclick = () => {
+                        const overlay = document.createElement("div")
+                        overlay.className = "overlay show"
+                        document.body.appendChild(overlay)
+                        contextMenuPlaylist.classList.remove("show")
+                        modalApp.classList.add("show")
+                        btnModal.forEach((btn) => {
+                            btn.onclick = (e) => {
+                                if (e.target.classList.contains("cancel-btn")) {
+                                    modalApp.classList.remove("show")
+                                    overlay.className = ""
+                                } else {
+                                    deleteMyPlaylist(
+                                        currentID,
+                                        contextMenuPlaylist
+                                    )
+                                    modalApp.classList.remove("show")
+                                    overlay.className = ""
+                                }
+                            }
+                        })
+                        document.addEventListener("click", (e) => {
+                            if (
+                                !modalApp.contains(e.target) &&
+                                !contextMenuPlaylist.contains(e.target)
+                            ) {
+                                modalApp.classList.remove("show")
+                                overlay.className = ""
+                            }
+                        })
+                    }
+
+                    editBtn.onclick = async (e) => {
+                        const currentPlaylist = await httpRequest.get(
+                            `playlists/${currentID}`
+                        )
+                        console.log(currentPlaylist)
+                        showDetailCreate()
+                        updateDetailCreateUI(currentPlaylist, true)
+                        showEditPlaylist(currentPlaylist)
+
+                        renderSidebar(true)
+                        contextMenuPlaylist.classList.remove("show")
+                    }
+
+                    createBtn.onclick = async (e) => {
+                        const credentials = {
+                            name: "My Playlist",
+                            description: "Playlist description",
+                            is_public: true,
+                            image_url:
+                                "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
+                        }
+
+                        const { playlist } = await httpRequest.post(
+                            "playlists",
+                            credentials
+                        )
+                        showDetailCreate()
+                        updateDetailCreateUI(playlist, false)
+                        contextMenuPlaylist.classList.remove("show")
+                    }
                 } else if (likedPlaylist.innerText === "Liked Songs") {
                     contextLikedPlaylists.classList.add("show")
                     Object.assign(contextLikedPlaylists.style, {
@@ -385,10 +452,14 @@ export async function showContextMenu() {
                         left: `${x}px`,
                         zIndex: 1000,
                     })
+                    console.log("hihi")
+
                     contextMenuMyFollowed.classList.remove("show")
                     contextMenuPlaylist.classList.remove("show")
                 } else {
                     contextMenuMyFollowed.classList.add("show")
+                    console.log("haha")
+
                     Object.assign(contextMenuMyFollowed.style, {
                         position: "fixed",
                         top: `${y}px`,
@@ -431,32 +502,46 @@ let isArtist = true
 
 export function renderDetailPlaylist() {
     const libraryContent = document.querySelector(".library-content")
-    libraryContent.addEventListener("click", (e) => {
+    const detailCreate = document.querySelector(".detail-create")
+
+    libraryContent.addEventListener("click", async (e) => {
+        hasUpdated = true
         const currentTab = document.querySelector(".nav-tab.active")
         currentTab.textContent === "Playlists"
             ? (isArtist = false)
             : (isArtist = true)
         const currentPlaylistID =
             e.target.closest(".library-item").dataset.playlistId
-
+        if (!currentPlaylistID) return
         if (currentPlaylistID) {
-            renderPlaylist(currentPlaylistID, isArtist)
-            showDetailPlaylist()
+            try {
+                const playlist = await httpRequest.get(
+                    `playlists/${currentPlaylistID}`
+                )
+
+                updateDetailCreateUI(playlist, hasUpdated)
+                showDetailCreate()
+                showEditPlaylist(playlist)
+            } catch (error) {
+                console.log(error)
+            }
         }
     })
 }
 
 export function createNewPlaylist() {
     const menuItems = document.querySelectorAll(".menu-item")
-    const detailCreate = document.querySelector(".detail-create")
     const credentials = {
         name: "My Playlist",
         description: "Playlist description",
         is_public: true,
-        image_url: "https://example.com/playlist-cover.jpg",
+        image_url:
+            "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
     }
     menuItems.forEach((item) => {
         item.onclick = async (e) => {
+            hasUpdated = false
+
             const isCreatePlaylist =
                 e.currentTarget.dataset.type === "create-playlist"
             if (isCreatePlaylist) {
@@ -464,13 +549,10 @@ export function createNewPlaylist() {
                     "playlists",
                     credentials
                 )
-                const playlistID = playlist.id
-                const html = renderDetailCreate(playlist)
-                detailCreate.innerHTML = html
+                updateDetailCreateUI(playlist, hasUpdated)
                 showDetailCreate()
                 renderSidebar()
-
-                showEditPlaylist(playlistID)
+                showEditPlaylist(playlist)
             }
         }
     })
@@ -496,7 +578,7 @@ function showDetailCreate() {
     hitsSection.style.display = "none"
 }
 
-export function showEditPlaylist(playlistID) {
+export function showEditPlaylist(playlist) {
     let finalImage = null
     let finalName = null
     let finalDesc = null
@@ -513,8 +595,8 @@ export function showEditPlaylist(playlistID) {
     const saveBtn = editInfoPlaylist.shadowRoot.querySelector(".save-btn")
     const imageUpload =
         editInfoPlaylist.shadowRoot.querySelector(".image-upload")
+    const img = imageUpload.querySelector(".preview-image")
     const iconUploadImage = imageUpload.querySelector("i")
-    console.log(iconUploadImage)
 
     const inputUpload =
         editInfoPlaylist.shadowRoot.querySelector(".input-upload")
@@ -525,6 +607,8 @@ export function showEditPlaylist(playlistID) {
         playlistName.value = nameInputElement.textContent.trim()
         playlistName.addEventListener("focus", (e) => e.target.select())
         playlistName.focus()
+
+        img.src = playlist.image_url
     }
 
     cover.onclick = (e) => {
@@ -535,37 +619,30 @@ export function showEditPlaylist(playlistID) {
         playlistName.focus()
     }
 
-    iconUploadImage.onclick = (e) => {
+    imageUpload.onclick = (e) => {
         inputUpload.click()
         inputUpload.addEventListener("change", () => {
             finalImage = inputUpload.files[0] // File được chọn
         })
     }
 
-    iconUploadImage.onclick = (e) => {
-        inputUpload.click()
+    if (iconCover) {
+        iconCover.addEventListener("mouseover", (e) => {
+            iconCover.className = "fa-solid fa-pen"
+        })
+
+        iconCover.addEventListener("mouseout", (e) => {
+            iconCover.className = "fas fa-music"
+        })
     }
-    imageUpload.onclick = () => {
-        inputUpload.click()
-    }
 
-    imageUpload.onclick = () => {}
-
-    iconCover.addEventListener("mouseover", (e) => {
-        iconCover.className = "fa-solid fa-pen"
+    imageUpload.addEventListener("mouseover", (e) => {
+        img.style.display = "none"
+        iconUploadImage.classList.add("fa-pen")
     })
-
-    iconCover.addEventListener("mouseout", (e) => {
-        iconCover.className = "fas fa-music"
-    })
-
-    iconUploadImage.addEventListener("mouseover", (e) => {
-        e.target.classList.remove("fa-music")
-        e.target.classList.add("fa-pen")
-    })
-    iconUploadImage.addEventListener("mouseout", (e) => {
-        e.target.classList.add("fa-music")
-        e.target.classList.remove("fa-pen")
+    imageUpload.addEventListener("mouseout", (e) => {
+        iconUploadImage.classList.remove("fa-pen")
+        img.style.display = "block"
     })
 
     inputUpload.addEventListener("change", () => {
@@ -591,7 +668,6 @@ export function showEditPlaylist(playlistID) {
             imageUpload.classList.add("has-image")
         }
     })
-    let hasUpdated = false
     saveBtn.addEventListener("click", async (e) => {
         hasUpdated = true
         const textName = playlistName.value
@@ -602,31 +678,37 @@ export function showEditPlaylist(playlistID) {
         let linkImg = null
         if (finalName) {
             if (finalImage) {
-                const file = await uploadImage(finalImage, playlistID)
+                const file = await uploadImage(finalImage, playlist.id)
                 linkImg = `https://spotify.f8team.dev${file.url}`
             }
         }
+        const currentPlaylistID = playlist.id
+
+        const currentImageCover = playlist.image_url
         const name = finalName
         const description = finalDesc
         const is_public = true
-        const image_url = linkImg
+        const image_url = linkImg ?? currentImageCover
+
         const credentials = {
             name,
             description,
             is_public,
             image_url,
         }
-        console.log(credentials, playlistID)
+        if (!name) return
 
         try {
             const { playlist } = await httpRequest.put(
-                `playlists/${playlistID}`,
+                `playlists/${currentPlaylistID}`,
                 credentials
             )
-            const html = renderDetailCreate(playlist, hasUpdated)
-            detailCreate.innerHTML = html
-            
+            updateDetailCreateUI(playlist)
+            showEditPlaylist(playlist)
+
             renderSidebar()
+            showEditPlaylist(playlist)
+            showContextMenu()
         } catch (error) {
             console.log(error)
         }
@@ -659,4 +741,31 @@ async function uploadImage(fileImage, playlistID) {
         formData
     )
     return file
+}
+function updateDetailCreateUI(playlist, hasUpdated) {
+    const detailCreate = document.querySelector(".detail-create")
+    detailCreate.classList.add("show")
+
+    const cover = document.querySelector(".detail-create .cover")
+    const nameEl = document.querySelector(".detail-create .name")
+    const descEl = document.querySelector(".detail-create .desc")
+
+    cover.innerHTML = `<img src="${playlist.image_url}">`
+    nameEl.textContent = playlist.name
+    descEl.textContent = playlist.description || ""
+}
+
+async function deleteMyPlaylist(myPlaylistID, currentContextMenu) {
+    try {
+        const message = await httpRequest.del(`playlists/${myPlaylistID}`)
+        console.log(message)
+        isMyPlayLists = true
+        toast.success("Delete Success", `${message.message}`)
+        renderSidebar(isMyPlayLists)
+    } catch (error) {
+        const codeError = error?.response?.error.code
+        const mesError = error?.response?.error.message
+        toast.error(codeError, mesError)
+    }
+    currentContextMenu.classList.remove("show")
 }

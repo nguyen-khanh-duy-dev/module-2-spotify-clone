@@ -313,10 +313,10 @@
                                 <i class="fas fa-play"></i>
                             </button>
                             <div class="extra-controls">
-                                <button class="shuffle-btn active">
+                                <button class="shuffle-btn">
                                     <i class="fas fa-random"></i>
                                 </button>
-                                <button class="add-btn">
+                                <button class="add-btn follow">
                                     <i class="fas fa-plus"></i>
                                     <!-- active => fa-check -->
                                 </button>
@@ -338,7 +338,60 @@
                         </section>
                     </section>
 
-                    <section class="detail-create"></section>
+                    <section class="detail-create">
+                        <!-- Playlist Header -->
+                        <div class="header">
+                            <div class="cover">
+                                <img
+                                    src=""
+                                    alt="cover image"
+                                    class="cover-img"
+                                />
+                            </div>
+                            <div class="info">
+                                <p class="type"></p>
+                                <h1 class="name"></h1>
+                                <span class="desc"></span>
+                                <p class="owner"></p>
+                            </div>
+                        </div>
+
+                        <!-- Playlist Controls -->
+                        <div class="controls">
+                            <div class="left">
+                                <button>
+                                    <i class="fas fa-user-plus"></i>
+                                </button>
+                                <button>
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                            <div class="right">
+                                <span class="view-label">Compact</span>
+                                <i class="fas fa-bars"></i>
+                            </div>
+                        </div>
+
+                        <!-- Search Section -->
+                        <div class="search-section">
+                            <p class="title">
+                                Let's find something for your playlist
+                            </p>
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search for songs or episodes"
+                                />
+                                <button class="clear">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Empty Placeholder -->
+                        <div class="empty-placeholder"></div>
+                    </section>
                 </div>
             </main>
 
@@ -642,9 +695,9 @@
             <li class="menu-item">Create playlist</li>
         </context-menu-app>
         <context-menu-app class="context-my-playlist">
-            <li class="menu-item">Edit details</li>
+            <li class="menu-item edit">Edit details</li>
             <li class="menu-item delete">Delete</li>
-            <li class="menu-item">Create playlist</li>
+            <li class="menu-item create">Create playlist</li>
         </context-menu-app>
 
         <context-menu-app class="context-artist">
@@ -791,6 +844,9 @@
                 }
 
                 .preview-image {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
@@ -831,8 +887,8 @@
                 </div>
                 <div class="header">
                     <div class="image-upload">
-                        <img class="preview-image" style="display: none" />
-                        <i class="fas fa-music icon-upload"></i>
+                        <img class="preview-image" />
+                        <i class="fas icon-upload"></i>
                     </div>
 
                     <input
@@ -865,6 +921,89 @@
                     you choose to upload. Please make sure you have the right to
                     upload the image.
                 </p>
+            </div>
+        </template>
+
+        <modal-app class="modal-app"></modal-app>
+        <template id="modal-template">
+            <style>
+                * {
+                    padding: 0;
+                    margin: 0;
+                    box-sizing: border-box;
+                }
+
+                .box-modal {
+                    background-color: #fff;
+                    border-radius: 6px;
+                    font-family: "Circular", -apple-system, BlinkMacSystemFont,
+                        "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+                        sans-serif;
+                    color: #000;
+                    width: 390px;
+                    height: 200px;
+                    padding: 25px 35px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+
+                .heading {
+                    font-size: 23px;
+                    font-weight: 700;
+                }
+                .sub-heading {
+                    font-size: 15px;
+                }
+
+                .btn {
+                    background-color: #fff;
+                    font-size: 15px;
+                    border-radius: 30px;
+                    padding: 10px 15px;
+                    border: none;
+                    cursor: pointer;
+                    font-weight: 600;
+                }
+
+                .del-btn:hover,
+                .cancel-btn:hover {
+                    scale: 1.1;
+                }
+
+                .modal-footer {
+                    text-align: end;
+                }
+
+                .cancel-btn {
+                    scale: 1;
+                    transition: scale ease 0.3s;
+                }
+
+                .del-btn {
+                    scale: 1;
+
+                    background-color: #1db954;
+                    transition: scale ease-in-out 0.3s;
+                }
+                .del-btn:hover {
+                    background-color: #5cd888;
+                    scale: 1.1;
+                }
+            </style>
+            <div class="box-modal">
+                <div class="modal-header">
+                    <h1 class="heading">Delete from Your Library?</h1>
+                    <span
+                        >This will delete
+                        <strong class="sub-heading">My playlist</strong> from
+                        <strong>Your Library</strong></span
+                    >
+                </div>
+                <div class="modal-footer">
+                    <button class="btn cancel-btn">Cancel</button>
+                    <button class="btn del-btn">Delete</button>
+                </div>
             </div>
         </template>
 

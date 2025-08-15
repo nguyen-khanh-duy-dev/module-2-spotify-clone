@@ -17,6 +17,7 @@ import {
 } from "./src/sidebar.js"
 import "./src/context-menu-app.js"
 import "./src/edit-detail-app.js"
+import "./src/modal-app.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -304,7 +305,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Player functionality
 document.addEventListener("DOMContentLoaded", function () {
-    const playControl = document.querySelector(".player")
     const toolTip = document.querySelectorAll(".tool-tip")
 
     toolTip.forEach((item) => {
@@ -325,7 +325,6 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", async function () {
     toolTipSidebar()
     layoutSelector()
-    // await renderSidebar()
 
     createPlaylist()
     filterPlaylists()
@@ -351,7 +350,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     let isArtist = false
 
     detailArtistPlaylist(isArtist)
-    detailBiggestHitsPlaylist(isArtist)
     showContextMenu()
     // Render from sidebar
     renderDetailPlaylist()
@@ -360,32 +358,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Function to show detail Play list of Artist
 function detailArtistPlaylist(isArtist) {
     const artistCards = document.querySelectorAll(".artist-card")
+
     isArtist = true
     artistCards.forEach((card) => {
         card.onclick = async (e) => {
+            const currentArtistID = e.currentTarget.dataset.artistId
+            console.log(currentArtistID)
+
             const artistId = e.currentTarget.dataset.artistId
             if (artistId) {
                 await renderPlaylist(artistId, isArtist)
             }
             showDetailPlaylist()
+            handleFollow(currentArtistID)
         }
     })
 }
 // Function to show detail Play list of Biggest Hit
 
-function detailBiggestHitsPlaylist(isArtist) {
-    const biggestHitsCards = document.querySelectorAll(".hit-card")
-    isArtist = false
-    biggestHitsCards.forEach((card) => {
-        card.onclick = async (e) => {
-            const hitID = e.currentTarget.dataset.hitId
-            if (hitID) {
-                await renderPlaylist(hitID, isArtist)
-            }
-            showDetailPlaylist()
-        }
-    })
-}
+// function detailBiggestHitsPlaylist(isArtist) {
+//     const biggestHitsCards = document.querySelectorAll(".hit-card")
+//     isArtist = false
+//     biggestHitsCards.forEach((card) => {
+//         card.onclick = async (e) => {
+//             const hitID = e.currentTarget.dataset.hitId
+//             if (hitID) {
+//                 await renderPlaylist(hitID, isArtist)
+//             }
+//             showDetailPlaylist()
+//         }
+//     })
+// }
 
 async function updateCurrentUser(user) {
     // get DOM Header Action and .user-menu
@@ -448,4 +451,45 @@ export function showDetailPlaylist() {
     hitSection.style.display = "none"
     artistSection.style.display = "none"
     detailCreate.classList.remove("show")
+}
+
+function handleFollow(currentArtistId) {
+    const followBtn = document.querySelector(".follow")
+    const iconCheck = document.querySelector(".follow i")
+    if (!followBtn) return
+
+    followBtn.addEventListener("click", async (e) => {
+        followBtn.classList.toggle("active")
+
+        if (iconCheck.classList.contains("fa-plus")) {
+            iconCheck.classList.remove("fa-plus")
+            iconCheck.classList.add("fa-check")
+            try {
+                const result = await httpRequest.post(
+                    `artists/${currentArtistId}/follow`
+                )
+                console.log(result)
+
+                toast.success("Thành công", result.message)
+            } catch (error) {
+                const codeErr = error?.response?.error.code
+                const messageErr = error?.response?.error.message
+                toast.error(codeErr, messageErr)
+            }
+        } else {
+            iconCheck.classList.add("fa-plus")
+            iconCheck.classList.remove("fa-check")
+
+            try {
+                const result = await httpRequest.del(
+                    `artists/${currentArtistId}/follow`
+                )
+                toast.success("Thành công", result.message)
+            } catch (error) {
+                const codeErr = error?.response?.error.code
+                const messageErr = error?.response?.error.message
+                toast.error(codeErr, messageErr)
+            }
+        }
+    })
 }

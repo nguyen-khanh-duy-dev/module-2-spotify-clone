@@ -57,7 +57,7 @@ class HttpRequest {
     }
 
     async del(path, options) {
-        return await this._send(path, "GET", null, options)
+        return await this._send(path, "DELETE", null, options)
     }
 }
 

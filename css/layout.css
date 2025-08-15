@@ -707,4 +707,30 @@ hr {
     top: 50%;
     left: 50%;
     transform: translate(-25%, -70%);
+    z-index: 1000;
+}
+
+/* Modal app */
+
+.modal-app {
+    transition: opacity ease-in 0.3s, visibility ease 0.3s;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.modal-app.show {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    opacity: 1;
+    visibility: visible;
+}
+
+.overlay.show {
+    position: absolute;
+    inset: 0; /* thay cho top/left/right/bottom = 0 */
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
 }

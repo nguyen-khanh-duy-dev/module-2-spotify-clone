@@ -3,7 +3,7 @@ import { convertTime } from "../utils/convertTime.js"
 
 const artistHero = document.querySelector(".artist-hero")
 const artistControl = document.querySelector(".artist-controls")
-
+let isFollowed = false
 const playlistSection = document.querySelector(".popular-section")
 export async function renderPlaylist(id, isArtist) {
     const trackList = playlistSection.querySelector(".track-list")
@@ -15,8 +15,22 @@ export async function renderPlaylist(id, isArtist) {
         let detailPlaylist = null
         if (isArtist) {
             detailPlaylist = await httpRequest.get(`artists/${id}`)
+            const { artists } = await httpRequest.get(
+                "me/following?limit=20&offset=0"
+            )
+            const result = artists.find((artist) => artist.id === id)
+            if (result) {
+                isFollowed = true
+            }
         } else {
             detailPlaylist = await httpRequest.get(`playlists/${id}`)
+            const { playlists } = await httpRequest.get(
+                "me/playlists/followed?limit=20&offset=0"
+            )
+            const result = playlists.find((playlist) => playlist.id === id)
+            if (result) {
+                isFollowed = true
+            }
         }
 
         const heroSectionHtml = `
@@ -54,16 +68,12 @@ export async function renderPlaylist(id, isArtist) {
         const artistControlHtml = `
             <button class="play-btn-large">
                 <i class="fas fa-play"></i>
-            </button>
-            ${
-                trackFit.length === 0
-                    ? ""
-                    : `<div class="extra-controls">
+            </button><div class="extra-controls">
                 <button class="shuffle-btn active">
                     <i class="fas fa-random"></i>
                 </button>
-                <button class="add-btn">
-                    <i class="fas fa-plus"></i>
+                <button class="add-btn follow ${isFollowed ? "active" : ""}">
+                    <i class="fas ${isFollowed ? "fa-check" : "fa-plus"}"></i>
                     <!-- active => fa-check -->
                 </button>
                 <button class="download-btn">
@@ -72,8 +82,7 @@ export async function renderPlaylist(id, isArtist) {
                 <button class="more-btn">
                     <i class="fas fa-ellipsis-h"></i>
                 </button>
-            </div>`
-            }
+            </div>
         `
         artistControl.innerHTML = artistControlHtml
         const html = trackFit
