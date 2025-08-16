@@ -5,6 +5,7 @@ const artistHero = document.querySelector(".artist-hero")
 const artistControl = document.querySelector(".artist-controls")
 let isFollowed = false
 const playlistSection = document.querySelector(".popular-section")
+
 export async function renderPlaylist(id, isArtist) {
     const trackList = playlistSection.querySelector(".track-list")
 

@@ -1,7 +1,12 @@
+import { convertTime } from "../utils/convertTime.js"
 import httpRequest from "../utils/httpRequest.js"
 import toast from "../utils/toast.js"
+import { renderMySearchTracks } from "../main.js"
+import { renderPlaylist } from "../render/renderPlaylist.js"
+import { showDetailPlaylist } from "../main.js"
 let hasUpdated = false
 
+const sidebar = document.querySelector(".sidebar")
 const searchBtn = document.querySelector(".search-library-btn")
 const searchInput = document.querySelector("#search-library-input")
 const sortBtn = document.querySelector(".sort-btn")
@@ -35,26 +40,32 @@ export function layoutSelector() {
     const sortBtn = document.querySelector(".sort-btn")
     const dropDown = document.querySelector(".dropdown")
     sortBtn.onclick = (e) => {
-        const x = e.currentTarget.offsetLeft
-        const y = e.currentTarget.offsetTop
+        const rect = e.target.getBoundingClientRect()
+        console.log(rect)
+
+        const x = e.target.offsetLeft
+        const y = e.target.offsetTop
 
         const currentDisplay = getComputedStyle(dropDown).display
 
         if (currentDisplay === "none") {
             dropDown.style.display = "block"
-            dropDown.style.left = `${x - 100}px`
-            dropDown.style.top = `${y + 30}px`
+            dropDown.style.left = `${rect.left}px`
+            dropDown.style.top = `${rect.top + 30}px`
+            sidebar.classList.add("noscroll")
         } else {
             dropDown.style.display = "none"
+            sidebar.classList.remove("noscroll")
         }
-    }
 
-    document.addEventListener("click", (e) => {
-        // Nếu click ra ngoài input => ẩn
-        if (!sortBtn.contains(e.target) && !dropDown.contains(e.target)) {
-            dropDown.style.display = "none"
-        }
-    })
+        document.addEventListener("click", (e) => {
+            // Nếu click ra ngoài input => ẩn
+            if (!sortBtn.contains(e.target) && !dropDown.contains(e.target)) {
+                dropDown.style.display = "none"
+                sidebar.classList.remove("noscroll")
+            }
+        })
+    }
 }
 
 // Render sidebar
@@ -243,15 +254,20 @@ export function createPlaylist() {
     createBtn.onclick = (e) => {
         plusIcon.classList.toggle("active")
         createModal.classList.toggle("active")
-    }
+        sidebar.classList.add("noscroll")
 
-    // close modal when click outside
-    document.addEventListener("click", (e) => {
-        if (!createBtn.contains(e.target) && !createModal.contains(e.target)) {
-            plusIcon.classList.remove("active")
-            createModal.classList.remove("active")
-        }
-    })
+        // close modal when click outside
+        document.addEventListener("click", (e) => {
+            if (
+                !createBtn.contains(e.target) &&
+                !createModal.contains(e.target)
+            ) {
+                plusIcon.classList.remove("active")
+                createModal.classList.remove("active")
+                sidebar.classList.remove("noscroll")
+            }
+        })
+    }
 }
 // Nếu đặt trong hàm filterPlaylists thì mỗi lần gọi hàm đó sẽ là true
 // Lưu ý điểm này
@@ -342,13 +358,9 @@ export async function showContextMenu() {
         .querySelector(".liked-songs")
         .closest(".library-item")
         .querySelector(".item-title")
-    console.log(likedPlaylist)
 
     try {
         const { playlists: myPlaylists } = await httpRequest.get("me/playlists")
-        const { playlists: myFollowedPlaylist } = await httpRequest.get(
-            "me/playlists/followed"
-        )
 
         libraryContent.addEventListener("contextmenu", (e) => {
             e.preventDefault()
@@ -359,7 +371,6 @@ export async function showContextMenu() {
             const isMyPlaylist = myPlaylists.some(
                 (playlist) => playlist.id === currentID
             )
-            console.log(currentID)
 
             const x = e.clientX
             const y = e.clientY
@@ -418,7 +429,6 @@ export async function showContextMenu() {
                         const currentPlaylist = await httpRequest.get(
                             `playlists/${currentID}`
                         )
-                        console.log(currentPlaylist)
                         showDetailCreate()
                         updateDetailCreateUI(currentPlaylist, true)
                         showEditPlaylist(currentPlaylist)
@@ -452,13 +462,11 @@ export async function showContextMenu() {
                         left: `${x}px`,
                         zIndex: 1000,
                     })
-                    console.log("hihi")
 
                     contextMenuMyFollowed.classList.remove("show")
                     contextMenuPlaylist.classList.remove("show")
                 } else {
                     contextMenuMyFollowed.classList.add("show")
-                    console.log("haha")
 
                     Object.assign(contextMenuMyFollowed.style, {
                         position: "fixed",
@@ -478,6 +486,15 @@ export async function showContextMenu() {
                     left: `${x}px`,
                     zIndex: 1000,
                 })
+                contextMenuArtist.addEventListener(
+                    "click",
+                    async (e) =>
+                        await handleUnfollowSidebar(
+                            currentID,
+                            contextMenuArtist
+                        )
+                )
+                renderSidebar(false)
             }
         })
         // Click out side => hide context menu
@@ -498,6 +515,20 @@ export async function showContextMenu() {
     }
 }
 
+async function handleUnfollowSidebar(currentArtistID, contextMenu) {
+    try {
+        const result = await httpRequest.del(
+            `artists/${currentArtistID}/follow`
+        )
+        toast.success("Thành công", result.message)
+    } catch (error) {
+        const codeErr = error?.response?.error.code
+        const messageErr = error?.response?.error.message
+        toast.error(codeErr, messageErr)
+    }
+    contextMenu.classList.remove("show")
+}
+
 let isArtist = true
 
 export function renderDetailPlaylist() {
@@ -510,20 +541,35 @@ export function renderDetailPlaylist() {
         currentTab.textContent === "Playlists"
             ? (isArtist = false)
             : (isArtist = true)
-        const currentPlaylistID =
-            e.target.closest(".library-item").dataset.playlistId
-        if (!currentPlaylistID) return
+        const currentItem = e.target.closest(".library-item")
+        if (!currentItem) return
+        const currentPlaylistID = currentItem.dataset.playlistId
+        console.log(currentPlaylistID)
+
         if (currentPlaylistID) {
             try {
-                const playlist = await httpRequest.get(
-                    `playlists/${currentPlaylistID}`
-                )
-
-                updateDetailCreateUI(playlist, hasUpdated)
-                showDetailCreate()
-                showEditPlaylist(playlist)
+                if (!isArtist) {
+                    const playlist = await httpRequest.get(
+                        `playlists/${currentPlaylistID}`
+                    )
+                    updateDetailCreateUI(playlist, hasUpdated)
+                    showDetailCreate()
+                    showEditPlaylist(playlist)
+                    renderMySearchTracks(currentPlaylistID)
+                    console.log("hihi")
+                } else {
+                    isArtist = true
+                    const artist = await httpRequest.get(
+                        `artists/${currentPlaylistID}`
+                    )
+                    await renderPlaylist(artist.id, true)
+                    showDetailPlaylist()
+                    console.log("hah")
+                }
             } catch (error) {
-                console.log(error)
+                const codeError = error?.response?.error.code
+                const mesError = error?.response?.error.message
+                console.log(codeError, mesError)
             }
         }
     })
@@ -753,6 +799,42 @@ function updateDetailCreateUI(playlist, hasUpdated) {
     cover.innerHTML = `<img src="${playlist.image_url}">`
     nameEl.textContent = playlist.name
     descEl.textContent = playlist.description || ""
+
+    renderMyTracks(playlist.id)
+}
+
+async function renderMyTracks(playlistID) {
+    const myTrackSection = document.querySelector(".my-tracks")
+    const { tracks } = await httpRequest.get(`playlists/${playlistID}/tracks`)
+
+    if (!tracks) return
+
+    const headerHtml = `<div class="tracks-header">
+                            <div class="col number">#</div>
+                            <div class="col title">Title</div>
+                            <div class="col artist">Artist</div>
+                            <div class="col duration">⏱</div>
+                        </div>`
+    myTrackSection.innerHTML = headerHtml
+
+    let trackItemHtml = tracks
+        .map(
+            (track, index) =>
+                `<div class="track-item" data-track-id="${track.id}">
+            <div class="col number">
+                <span class="track-index">${index}</span>
+                <span class="track-play">▶</span>
+            </div>
+            <div class="col title">
+                ${track.track_title}
+            </div>
+            <div class="col artist">${track.artist_name}</div>
+            <div class="col duration">${convertTime(track.track_duration)}</div>
+        </div>`
+        )
+        .join("")
+
+    myTrackSection.insertAdjacentHTML("beforeend", trackItemHtml)
 }
 
 async function deleteMyPlaylist(myPlaylistID, currentContextMenu) {

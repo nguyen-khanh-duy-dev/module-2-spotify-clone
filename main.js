@@ -1,5 +1,6 @@
 import httpRequest from "./utils/httpRequest.js"
 import toast from "./utils/toast.js"
+import { convertTime } from "./utils/convertTime.js"
 import { renderBiggestHits } from "./render/renderBiggestHits.js"
 import { renderArtists } from "./render/renderArtists.js"
 import { renderPlaylist } from "./render/renderPlaylist.js"
@@ -374,21 +375,6 @@ function detailArtistPlaylist(isArtist) {
         }
     })
 }
-// Function to show detail Play list of Biggest Hit
-
-// function detailBiggestHitsPlaylist(isArtist) {
-//     const biggestHitsCards = document.querySelectorAll(".hit-card")
-//     isArtist = false
-//     biggestHitsCards.forEach((card) => {
-//         card.onclick = async (e) => {
-//             const hitID = e.currentTarget.dataset.hitId
-//             if (hitID) {
-//                 await renderPlaylist(hitID, isArtist)
-//             }
-//             showDetailPlaylist()
-//         }
-//     })
-// }
 
 async function updateCurrentUser(user) {
     // get DOM Header Action and .user-menu
@@ -424,16 +410,6 @@ async function updateCurrentUser(user) {
         authButtons.style.display = "none"
     } catch (error) {
         authButtons.style.display = "flex"
-    }
-}
-
-// CHưa sử dụng
-async function getTracks() {
-    try {
-        const { tracks } = await httpRequest.get("tracks")
-        return tracks
-    } catch (error) {
-        console.log(error)
     }
 }
 
@@ -493,3 +469,93 @@ function handleFollow(currentArtistId) {
         }
     })
 }
+export function renderMySearchTracks(playlistID) {
+    const sectionFindTracks = document.querySelector(".find-tracks")
+    const searchTracksInput = document.querySelector("#search-tracks")
+    searchTracksInput.addEventListener("input", async (e) => {
+        const inputValue = e.target.value.toLowerCase().trim()
+        try {
+            const { tracks } = await httpRequest.get("tracks?limit=50&offset=0")
+            const filtered = tracks.filter((track) =>
+                track.title.toLowerCase().includes(inputValue)
+            )
+            if (inputValue) {
+                const html = filtered
+                    .map(
+                        (item) =>
+                            `
+                    <div class="song-item" data-track-id ="${item.id}">
+                        <img
+                            src="${item.image_url}"
+                            alt="cover"
+                        />
+                        <div class="song">
+                            <span class="title">${item.title}</span>
+                            <span class="sub-title">${item.artist_name}</span>
+                        </div>
+                        <button class="add-btn">Add</button>
+                    </div>
+                    `
+                    )
+                    .join("")
+                sectionFindTracks.innerHTML = html
+                addTracksToPlaylist(playlistID)
+            } else {
+                sectionFindTracks.innerHTML = ""
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    })
+}
+
+function addTracksToPlaylist(playlistID) {
+    const addTracksBtn = document.querySelectorAll(".find-tracks .add-btn")
+    if (!addTracksBtn) return
+
+    addTracksBtn.forEach((addBtn) => {
+        addBtn.onclick = (e) => {
+            const trackID = e.target.closest(".song-item ").dataset.trackId
+            renderTracks(trackID, playlistID)
+        }
+    })
+}
+
+async function renderTracks(trackID, playlistID) {
+    let html = ""
+    const myTracks = document.querySelector(".my-tracks")
+    const myTracksSection = document.querySelector(".my-tracks .track-item")
+    try {
+        const trackById = await httpRequest.get(`tracks/${trackID}`)
+        const track_id = trackById.id
+        const credentials = {
+            track_id,
+            position: 0,
+        }
+        const { message, playlist_track } = await httpRequest.post(
+            `playlists/${playlistID}/tracks`,
+            credentials
+        )
+        if (myTracksSection) {
+            html = `
+            <div class="track-item">
+                <div class="col number">
+                    <span class="track-index">${1}</span>
+                    <span class="track-play">▶</span>
+                </div>
+                <div class="col title">
+                    ${trackById.title}
+                </div>
+                <div class="col artist">${trackById.artist_name}</div>
+                <div class="col duration">${convertTime(
+                    trackById.duration
+                )}</div>
+            </div>`
+
+            myTracks.insertAdjacentHTML("beforeend", html)
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
