@@ -7,7 +7,8 @@ import { handleAuth } from "./src/auth/authHandler.js"
 import { renderBiggestHitsSection } from "./src/render/todayBiggestHitSection.js"
 import { renderArtistsSection } from "./src/render/popularArtistSection.js"
 import { renderDetail } from "./src/render/detailSection.js"
-import { handleSidebar } from "./src/components/sidebar.js"
+import { renderPlaylistsSection } from "./src/render/popularPlaylistSection.js"
+import { handleSidebar, isPlaylistsTab } from "./src/components/sidebar.js"
 import { toolTipSidebar } from "./src/components/toolTip/ttSidebar.js"
 
 // import { renderBiggestHits } from "./render/renderBiggestHits.js" Done
@@ -118,18 +119,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await renderBiggestHitsSection()
     await renderArtistsSection()
+    await renderPlaylistsSection()
 
-    let isArtist = false
-
-    detailArtistPlaylist(isArtist)
+    handleShowDetailSection()
     // showContextMenu()
     // Render from sidebar
     // renderDetailPlaylist()
 })
 
 // Function to show detail Play list of Artist
-function detailArtistPlaylist(isArtist) {
+function handleShowDetailSection() {
     const artistCards = document.querySelectorAll(".artist-card")
+    const playlistCards = document.querySelectorAll(".playlist-card")
+    let isArtist = null
 
     artistCards.forEach((card) => {
         card.onclick = async (e) => {
@@ -142,7 +144,22 @@ function detailArtistPlaylist(isArtist) {
                 await renderDetail(artistId, isArtist)
             }
             showDetailPlaylist()
-            handleFollow(currentArtistID)
+            handleFollow(currentArtistID, isArtist)
+        }
+    })
+
+    playlistCards.forEach((card) => {
+        card.onclick = async (e) => {
+            isArtist = false
+
+            const currentPlaylistID = e.currentTarget.dataset.playlistId
+            console.log(currentPlaylistID)
+
+            if (currentPlaylistID) {
+                await renderDetail(currentPlaylistID, isArtist)
+            }
+            showDetailPlaylist()
+            handleFollow(currentPlaylistID, isArtist)
         }
     })
 }
@@ -188,6 +205,7 @@ export function showDetailPlaylist() {
     const detailPlaylist = document.querySelector(".detail-playlist")
     const hitSection = document.querySelector(".hits-section")
     const artistSection = document.querySelector(".artists-section")
+    const playlistSection = document.querySelector(".playlists-section")
     const detailCreate = document.querySelector(".detail-create")
 
     detailPlaylist.scrollTo({
@@ -198,44 +216,62 @@ export function showDetailPlaylist() {
     hitSection.style.display = "none"
     artistSection.style.display = "none"
     detailCreate.classList.remove("show")
+    playlistSection.style.display = "none"
 }
 
-function handleFollow(currentArtistId) {
+function handleFollow(currentID, isArtist) {
     const followBtn = document.querySelector(".follow")
     const iconCheck = document.querySelector(".follow i")
+
+    let result = null
     if (!followBtn) return
 
     followBtn.addEventListener("click", async (e) => {
-        followBtn.classList.toggle("active")
-
         if (iconCheck.classList.contains("fa-plus")) {
-            iconCheck.classList.remove("fa-plus")
-            iconCheck.classList.add("fa-check")
             try {
-                const result = await httpRequest.post(
-                    `artists/${currentArtistId}/follow`
-                )
-                console.log(result)
+                isArtist
+                    ? (result = await httpRequest.post(
+                          EndPoints.artists.follow(currentID)
+                      ))
+                    : (result = await httpRequest.post(
+                          EndPoints.playlists.follow(currentID)
+                      ))
 
-                toast.success("Thành công", result.message)
+                iconCheck.classList.remove("fa-plus")
+                iconCheck.classList.add("fa-check")
+                followBtn.classList.add("active")
+
+                handleSidebar(isPlaylistsTab())
+
+                toast.success("Success", result.message)
             } catch (error) {
                 const codeErr = error?.response?.error.code
                 const messageErr = error?.response?.error.message
+
                 toast.error(codeErr, messageErr)
+                followBtn.classList.remove("active")
             }
         } else {
-            iconCheck.classList.add("fa-plus")
-            iconCheck.classList.remove("fa-check")
-
             try {
-                const result = await httpRequest.del(
-                    `artists/${currentArtistId}/follow`
-                )
-                toast.success("Thành công", result.message)
+                isArtist
+                    ? (result = await httpRequest.del(
+                          EndPoints.artists.unfollow(currentID)
+                      ))
+                    : (result = await httpRequest.del(
+                          EndPoints.playlists.unfollow(currentID)
+                      ))
+                iconCheck.classList.add("fa-plus")
+                iconCheck.classList.remove("fa-check")
+                followBtn.classList.remove("active")
+
+                handleSidebar(isPlaylistsTab())
+
+                toast.success("Success", result.message)
             } catch (error) {
                 const codeErr = error?.response?.error.code
                 const messageErr = error?.response?.error.message
                 toast.error(codeErr, messageErr)
+                // followBtn.classList.remove("active")
             }
         }
     })

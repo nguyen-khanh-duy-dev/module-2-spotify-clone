@@ -6,6 +6,7 @@ import toast from "../utils/toast.js"
 import { renderDetail } from "../render/detailSection.js"
 
 const libraryContent = document.querySelector(".library-content")
+const sidebar = document.querySelector(".sidebar")
 
 // import { renderMySearchTracks } from "../main.js"
 // import { renderPlaylist } from "../render/renderPlaylist.js" => Done -> Render Detail
@@ -46,7 +47,6 @@ const libraryContent = document.querySelector(".library-content")
 export function layoutSelector() {
     const sortBtn = document.querySelector(".sort-btn")
     const dropDown = document.querySelector(".dropdown")
-    console.log(sortBtn)
 
     sortBtn.onclick = (e) => {
         const rect = e.target.getBoundingClientRect()
@@ -67,7 +67,7 @@ export function layoutSelector() {
             // Nếu click ra ngoài input => ẩn
             if (!sortBtn.contains(e.target) && !dropDown.contains(e.target)) {
                 dropDown.style.display = "none"
-                // sidebar.classList.remove("noscroll")
+                sidebar.classList.remove("noscroll")
             }
         })
     }
@@ -105,32 +105,35 @@ async function getDataArtists() {
     return artists
 }
 
-async function switchTabs(inputValue = "") {
-    let finalList = null
-    let isPlaylistTab = null
+async function switchTabs(isPlaylists) {
     const searchInput = document.querySelector("#search-library-input")
     const navTabs = document.querySelectorAll(".nav-tab")
 
-    const playlists = await getDataPlaylists()
-    const artists = await getDataArtists()
-
-    renderSidebar(playlists, true)
+    const allMyPlaylists = await getDataPlaylists()
+    const myFlArtists = await getDataArtists()
+    isPlaylists
+        ? renderSidebar(allMyPlaylists, true)
+        : renderSidebar(myFlArtists, false)
 
     navTabs.forEach((tab) => {
         tab.onclick = async (e) => {
+            const playlists = await getDataPlaylists()
+            const artists = await getDataArtists()
+
             // Luôn update class active cho tab
             const beforeActive = document.querySelector(".nav-tab.active")
             if (beforeActive) beforeActive.classList.remove("active")
             e.target.classList.add("active")
+            if (beforeActive === e.target) return
 
             const keyword = searchInput.value.trim().toLowerCase()
 
             if (keyword) {
                 // Nếu có keyword thì filter nhưng vẫn theo tab đang chọn
                 if (e.target.textContent.trim() === "Playlists") {
-                    await filterData(keyword, playlists) // lọc trong playlists
+                    await filterData(keyword) // lọc trong playlists
                 } else {
-                    await filterData(keyword, artists) // lọc trong artists
+                    await filterData(keyword) // lọc trong artists
                 }
             } else {
                 // Nếu input trống thì render mặc định
@@ -144,13 +147,18 @@ async function switchTabs(inputValue = "") {
     })
 }
 
-function isPlaylistsTab() {
+export function isPlaylistsTab() {
     const currentTab = document.querySelector(".nav-tab.active")
     if (currentTab.innerText === "Playlists") {
         return true
     } else if (currentTab.innerText === "Artists") {
         return false
     }
+}
+
+function getCurrentSort() {
+    const currentSort = document.querySelector(".sort-btn").textContent.trim()
+    return currentSort
 }
 
 function sortData(list, option) {
@@ -178,7 +186,7 @@ function sortData(list, option) {
 async function handleSort() {
     let finalData = null
     const dropDown = document.querySelector(".dropdown")
-    // const optionSort = dropDown.querySelectorAll(".option")
+    const optionSort = dropDown.querySelectorAll(".option")
 
     const playlists = await getDataPlaylists()
     const artists = await getDataArtists()
@@ -223,14 +231,16 @@ async function handleSort() {
 }
 
 // Handle sidebar
-export async function handleSidebar(inputValue = "") {
+export async function handleSidebar(isPlaylists = true) {
     const user = localStorage.getItem("user")
+    if (!user) return
     const viewAs = document.querySelectorAll(".view-btn")
     layoutSelector()
-    switchTabs()
+    switchTabs(isPlaylists)
     handleSort()
     toggleCreateModal()
     searchPlaylist()
+    showContextMenu()
 
     viewAs.forEach((view) => {
         view.onclick = (e) => {
@@ -256,7 +266,7 @@ export function toggleCreateModal() {
     createBtn.onclick = (e) => {
         plusIcon.classList.toggle("active")
         createModal.classList.toggle("active")
-        // sidebar.classList.add("noscroll")
+        sidebar.classList.add("noscroll")
 
         // close modal when click outside
         document.addEventListener("click", (e) => {
@@ -266,36 +276,15 @@ export function toggleCreateModal() {
             ) {
                 plusIcon.classList.remove("active")
                 createModal.classList.remove("active")
-                // sidebar.classList.remove("noscroll")
+                sidebar.classList.remove("noscroll")
             }
         })
     }
 }
-// Nếu đặt trong hàm filterPlaylists thì mỗi lần gọi hàm đó sẽ là true
-// Lưu ý điểm này
-
-// export async function filterPlaylists(inputValue = "") {
-//     const navTabs = document.querySelectorAll(".nav-tab")
-//     await handleSidebar(isMyPlayLists, inputValue)
-
-//     navTabs.forEach((tab) => {
-//         tab.onclick = async (e) => {
-//             const beforeActive = document.querySelector(".nav-tab.active")
-//             beforeActive.classList.remove("active")
-//             e.target.classList.add("active")
-//             if (e.target.textContent === "Playlists") {
-//                 isMyPlayLists = true
-//             } else {
-//                 isMyPlayLists = false
-//             }
-
-//             await handleSidebar(isMyPlayLists, inputValue)
-//         }
-//     })
-// }
-// Done
 
 async function filterData(keyword) {
+    const searchLibraryInput = document.querySelector("#search-library-input")
+
     const playlists = await getDataPlaylists()
     const artists = await getDataArtists()
     let finalData = null
@@ -313,7 +302,10 @@ async function filterData(keyword) {
             : (finalData = artists)
     }
 
-    renderSidebar(finalData, isPlaylistsTab())
+    // finalData = sortData(finalData, currentSort)
+    searchLibraryInput.className.includes("show")
+        ? renderSidebar(finalData, isPlaylistsTab())
+        : ""
     // updateViewAs()
 }
 
@@ -321,6 +313,7 @@ export function searchPlaylist() {
     const searchBtn = document.querySelector(".search-library-btn")
     const searchInput = document.querySelector("#search-library-input")
     const sortBtn = document.querySelector(".sort-btn")
+    const dropDown = document.querySelector(".dropdown")
 
     searchBtn.addEventListener("click", (e) => {
         e.preventDefault()
@@ -376,18 +369,33 @@ function hideSearchInput() {
     sortBtn.innerHTML = `${optionActive.innerText} <i class="${viewAsActive}"></i>`
 }
 
+async function createNewPlaylist() {
+    const credentials = {
+        name: "My Playlist",
+        description: "Playlist description",
+        is_public: true,
+        image_url:
+            "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
+    }
+
+    const { playlist } = await httpRequest.post(
+        EndPoints.playlists.create,
+        credentials
+    )
+}
+
+async function checkIsMyPlaylist(currentPlaylistId) {
+    const { playlists } = await httpRequest(EndPoints.playlists.me)
+    
+    
+}
+
 export async function showContextMenu() {
-    const contextMenuPlaylist = document.querySelector(".context-my-playlist")
+    const libraryContent = document.querySelector(".library-content")
+    const contextMenuMyPlaylist = document.querySelector(".context-my-playlist")
     const contextLikedPlaylists = document.querySelector(".liked-playlists")
     const contextMenuMyFollowed = document.querySelector(".context-my-followed")
     const contextMenuArtist = document.querySelector(".context-artist")
-    const modalApp = document.querySelector(".modal-app")
-    const btnModal = modalApp.shadowRoot.querySelectorAll(".btn")
-
-    const likedPlaylist = document
-        .querySelector(".liked-songs")
-        .closest(".library-item")
-        .querySelector(".item-title")
 
     try {
         const { playlists: myPlaylists } = await httpRequest.get("me/playlists")
@@ -395,22 +403,19 @@ export async function showContextMenu() {
         libraryContent.addEventListener("contextmenu", (e) => {
             e.preventDefault()
             const currentElement = e.target.closest(".library-item")
+
             if (!currentElement) return
             const currentID = currentElement.dataset.playlistId
-
-            const isMyPlaylist = myPlaylists.some(
-                (playlist) => playlist.id === currentID
-            )
 
             const x = e.clientX
             const y = e.clientY
             const currentActiveTab = document.querySelector(".nav-tab.active")
 
-            if (currentActiveTab.textContent === "Playlists") {
+            if (currentActiveTab.textContent.trim() === "Playlists") {
                 // Nếu là myplaylist => Có thể edit và xóa
                 if (isMyPlaylist) {
-                    contextMenuPlaylist.classList.add("show")
-                    Object.assign(contextMenuPlaylist.style, {
+                    contextMenuMyPlaylist.classList.add("show")
+                    Object.assign(contextMenuMyPlaylist.style, {
                         position: "fixed",
                         top: `${y}px`,
                         left: `${x}px`,
@@ -427,7 +432,7 @@ export async function showContextMenu() {
                         const overlay = document.createElement("div")
                         overlay.className = "overlay show"
                         document.body.appendChild(overlay)
-                        contextMenuPlaylist.classList.remove("show")
+                        contextMenuMyPlaylist.classList.remove("show")
                         modalApp.classList.add("show")
                         btnModal.forEach((btn) => {
                             btn.onclick = (e) => {
@@ -437,7 +442,7 @@ export async function showContextMenu() {
                                 } else {
                                     deleteMyPlaylist(
                                         currentID,
-                                        contextMenuPlaylist
+                                        contextMenuMyPlaylist
                                     )
                                     modalApp.classList.remove("show")
                                     overlay.className = ""
@@ -447,7 +452,7 @@ export async function showContextMenu() {
                         document.addEventListener("click", (e) => {
                             if (
                                 !modalApp.contains(e.target) &&
-                                !contextMenuPlaylist.contains(e.target)
+                                !contextMenuMyPlaylist.contains(e.target)
                             ) {
                                 modalApp.classList.remove("show")
                                 overlay.className = ""
@@ -464,25 +469,13 @@ export async function showContextMenu() {
                         showEditPlaylist(currentPlaylist)
 
                         handleSidebar(true)
-                        contextMenuPlaylist.classList.remove("show")
+                        contextMenuMyPlaylist.classList.remove("show")
                     }
 
                     createBtn.onclick = async (e) => {
-                        const credentials = {
-                            name: "My Playlist",
-                            description: "Playlist description",
-                            is_public: true,
-                            image_url:
-                                "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
-                        }
-
-                        const { playlist } = await httpRequest.post(
-                            "playlists",
-                            credentials
-                        )
                         showDetailCreate()
                         updateDetailCreateUI(playlist, false)
-                        contextMenuPlaylist.classList.remove("show")
+                        contextMenuMyPlaylist.classList.remove("show")
                     }
                 } else if (likedPlaylist.innerText === "Liked Songs") {
                     contextLikedPlaylists.classList.add("show")
@@ -494,7 +487,7 @@ export async function showContextMenu() {
                     })
 
                     contextMenuMyFollowed.classList.remove("show")
-                    contextMenuPlaylist.classList.remove("show")
+                    contextMenuMyPlaylist.classList.remove("show")
                 } else {
                     contextMenuMyFollowed.classList.add("show")
 
@@ -505,7 +498,7 @@ export async function showContextMenu() {
                         zIndex: 1000,
                     })
                     contextLikedPlaylists.classList.remove("show")
-                    contextMenuPlaylist.classList.remove("show")
+                    contextMenuMyPlaylist.classList.remove("show")
                 }
             } else if (currentActiveTab.textContent === "Artists") {
                 contextMenuArtist.classList.add("show")
@@ -530,12 +523,12 @@ export async function showContextMenu() {
         // Click out side => hide context menu
         document.addEventListener("click", (e) => {
             if (
-                !contextMenuPlaylist.contains(e.target) &&
+                !contextMenuMyPlaylist.contains(e.target) &&
                 !contextMenuArtist.contains(e.target) &&
                 !contextMenuMyFollowed.contains(e.target)
             ) {
                 contextMenuArtist.classList.remove("show")
-                contextMenuPlaylist.classList.remove("show")
+                contextMenuMyPlaylist.classList.remove("show")
                 contextMenuMyFollowed.classList.remove("show")
                 contextLikedPlaylists.classList.remove("show")
             }
@@ -573,7 +566,6 @@ export function renderDetailPlaylist() {
         const currentItem = e.target.closest(".library-item")
         if (!currentItem) return
         const currentPlaylistID = currentItem.dataset.playlistId
-        console.log(currentPlaylistID)
 
         if (currentPlaylistID) {
             try {
@@ -585,7 +577,6 @@ export function renderDetailPlaylist() {
                     showDetailCreate()
                     showEditPlaylist(playlist)
                     renderMySearchTracks(currentPlaylistID)
-                    console.log("hihi")
                 } else {
                     isArtist = true
                     const artist = await httpRequest.get(
@@ -604,34 +595,34 @@ export function renderDetailPlaylist() {
     })
 }
 
-export function createNewPlaylist() {
-    const menuItems = document.querySelectorAll(".menu-item")
-    const credentials = {
-        name: "My Playlist",
-        description: "Playlist description",
-        is_public: true,
-        image_url:
-            "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
-    }
-    menuItems.forEach((item) => {
-        item.onclick = async (e) => {
-            hasUpdated = false
+// export function createNewPlaylist() {
+//     const menuItems = document.querySelectorAll(".menu-item")
+//     const credentials = {
+//         name: "My Playlist",
+//         description: "Playlist description",
+//         is_public: true,
+//         image_url:
+//             "https://mynoota.com/_next/image?url=%2F_static%2Fimages%2F__default.png&w=640&q=75",
+//     }
+//     menuItems.forEach((item) => {
+//         item.onclick = async (e) => {
+//             hasUpdated = false
 
-            const isCreatePlaylist =
-                e.currentTarget.dataset.type === "create-playlist"
-            if (isCreatePlaylist) {
-                const { playlist } = await httpRequest.post(
-                    "playlists",
-                    credentials
-                )
-                updateDetailCreateUI(playlist, hasUpdated)
-                showDetailCreate()
-                handleSidebar()
-                showEditPlaylist(playlist)
-            }
-        }
-    })
-}
+//             const isCreatePlaylist =
+//                 e.currentTarget.dataset.type === "create-playlist"
+//             if (isCreatePlaylist) {
+//                 const { playlist } = await httpRequest.post(
+//                     "playlists",
+//                     credentials
+//                 )
+//                 updateDetailCreateUI(playlist, hasUpdated)
+//                 showDetailCreate()
+//                 handleSidebar()
+//                 showEditPlaylist(playlist)
+//             }
+//         }
+//     })
+// }
 
 function showDetailCreate() {
     const detailCreate = document.querySelector(".detail-create")

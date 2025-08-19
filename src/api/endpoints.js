@@ -17,12 +17,14 @@ class EndPoints {
 
     // Playlists
     static playlists = {
-        all: "playlists",
+        all: (param) => `playlists?limit=${param}&offset=0`,
         me: "me/playlists",
         byId: (id) => `playlists/${id}`,
         delete: (id) => `playlists/${id}`,
         create: "playlists",
         update: (id) => `playlists${id}`,
+        follow: (id) => `playlists/${id}/follow`,
+        unfollow: (id) => `playlists/${id}/follow`,
         getTracks: (id) => `playlists/${id}/tracks`,
         addTrack: (id) => `playlists/${id}/tracks`,
         followed: "me/playlists/followed",

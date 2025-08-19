@@ -13,10 +13,19 @@ const playlistSection = document.querySelector(".popular-section")
 //      : It is Artist -> True(Artist), False(Playlist)
 export async function renderDetail(id, isArtist) {
     const trackList = playlistSection.querySelector(".track-list")
+    let tracksPlaylist = null
 
     try {
+        if (!isArtist) {
+            const { tracks } = await httpRequest.get(
+                EndPoints.playlists.getTracks(id)
+            )
+            tracksPlaylist = tracks
+        }
         const { tracks } = await httpRequest.get(EndPoints.tracks.all)
-        const trackFit = tracks.filter((track) => track.artist_id === id)
+        const trackFit = isArtist
+            ? tracks.filter((track) => track.artist_id === id)
+            : tracksPlaylist
 
         let detailPlaylist = null
         if (isArtist) {
@@ -98,18 +107,33 @@ export async function renderDetail(id, isArtist) {
                 <div class="track-number">1</div>
                 <div class="track-image">
                     <img
-                        src="${track.image_url ?? "https://picsum.photos/300"}"
-                        alt="${track.title ?? "Unknown Track"}"
+                        src="${
+                            isArtist
+                                ? track.image_url
+                                : `https://spotify.f8team.dev${track.track_image_url}` ??
+                                  "https://picsum.photos/200/200"
+                        }"
+                        alt="${
+                            isArtist
+                                ? track.title
+                                : track.track_title ?? "UnKnow"
+                        }"
                     />
                 </div>
                 <div class="track-info">
                     <div class="track-name">
-                        ${track.title} 
+                        ${
+                            isArtist
+                                ? track.title
+                                : track.track_title ?? "UnKnow"
+                        } 
                     </div>
                 </div>
                 <div class="track-plays">${track.play_count ?? "0"}</div>
                 <div class="track-duration">${
-                    convertTime(track.duration) ?? "0"
+                    isArtist
+                        ? convertTime(track.duration)
+                        : convertTime(track.track_duration) ?? "0"
                 }</div>
                 <button class="track-menu-btn">
                     <i class="fas fa-ellipsis-h"></i>
