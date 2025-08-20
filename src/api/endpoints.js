@@ -22,7 +22,7 @@ class EndPoints {
         byId: (id) => `playlists/${id}`,
         delete: (id) => `playlists/${id}`,
         create: "playlists",
-        update: (id) => `playlists${id}`,
+        update: (id) => `playlists/${id}`,
         follow: (id) => `playlists/${id}/follow`,
         unfollow: (id) => `playlists/${id}/follow`,
         getTracks: (id) => `playlists/${id}/tracks`,

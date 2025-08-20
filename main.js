@@ -9,26 +9,10 @@ import { renderArtistsSection } from "./src/render/popularArtistSection.js"
 import { renderDetail } from "./src/render/detailSection.js"
 import { renderPlaylistsSection } from "./src/render/popularPlaylistSection.js"
 import { handleSidebar, isPlaylistsTab } from "./src/components/sidebar.js"
-import { toolTipSidebar } from "./src/components/toolTip/ttSidebar.js"
+import { renderTracks } from "./src/render/tracksAtDetailPlaylist.js"
 
-// import { renderBiggestHits } from "./render/renderBiggestHits.js" Done
-// import { renderArtists } from "./render/renderArtists.js" Done
-// import { renderPlaylist } from "./render/renderPlaylist.js"
-// import {
-//     toolTipSidebar,
-//     layoutSelector,
-//     renderSidebar,
-//     createPlaylist,
-//     filterPlaylists,
-//     searchPlaylist,
-//     showContextMenu,
-//     renderDetailPlaylist,
-//     createNewPlaylist,
-//     showEditPlaylist,
-// } from "./src/sidebar.js"
-// import "./src/context-menu-app.js"
-// import "./src/edit-detail-app.js"
-// import "./src/modal-app.js"
+import "./src/components/webcomponents/modal-app.js"
+import "./src/components/webcomponents/edit-detail-app.js"
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -95,14 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
 // Sidebar functionality
 document.addEventListener("DOMContentLoaded", async function () {
     handleSidebar()
-
-    // createPlaylistSection()
-    // toolTipSidebar()
-    // layoutSelector()
-    // createPlaylist()
-    // filterPlaylists()
-    // searchPlaylist()
-    // createNewPlaylist()
 })
 
 // Other functionality
@@ -153,7 +129,6 @@ function handleShowDetailSection() {
             isArtist = false
 
             const currentPlaylistID = e.currentTarget.dataset.playlistId
-            console.log(currentPlaylistID)
 
             if (currentPlaylistID) {
                 await renderDetail(currentPlaylistID, isArtist)
@@ -276,47 +251,8 @@ function handleFollow(currentID, isArtist) {
         }
     })
 }
-export function renderMySearchTracks(playlistID) {
-    const sectionFindTracks = document.querySelector(".find-tracks")
-    const searchTracksInput = document.querySelector("#search-tracks")
-    searchTracksInput.addEventListener("input", async (e) => {
-        const inputValue = e.target.value.toLowerCase().trim()
-        try {
-            const { tracks } = await httpRequest.get("tracks?limit=50&offset=0")
-            const filtered = tracks.filter((track) =>
-                track.title.toLowerCase().includes(inputValue)
-            )
-            if (inputValue) {
-                const html = filtered
-                    .map(
-                        (item) =>
-                            `
-                    <div class="song-item" data-track-id ="${item.id}">
-                        <img
-                            src="${item.image_url}"
-                            alt="cover"
-                        />
-                        <div class="song">
-                            <span class="title">${item.title}</span>
-                            <span class="sub-title">${item.artist_name}</span>
-                        </div>
-                        <button class="add-btn">Add</button>
-                    </div>
-                    `
-                    )
-                    .join("")
-                sectionFindTracks.innerHTML = html
-                addTracksToPlaylist(playlistID)
-            } else {
-                sectionFindTracks.innerHTML = ""
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    })
-}
 
-function addTracksToPlaylist(playlistID) {
+export function addTracksToPlaylist(playlistID) {
     const addTracksBtn = document.querySelectorAll(".find-tracks .add-btn")
     if (!addTracksBtn) return
 
@@ -326,42 +262,4 @@ function addTracksToPlaylist(playlistID) {
             renderTracks(trackID, playlistID)
         }
     })
-}
-
-async function renderTracks(trackID, playlistID) {
-    let html = ""
-    const myTracks = document.querySelector(".my-tracks")
-    const myTracksSection = document.querySelector(".my-tracks .track-item")
-    try {
-        const trackById = await httpRequest.get(`tracks/${trackID}`)
-        const track_id = trackById.id
-        const credentials = {
-            track_id,
-            position: 0,
-        }
-        const { message, playlist_track } = await httpRequest.post(
-            `playlists/${playlistID}/tracks`,
-            credentials
-        )
-        if (myTracksSection) {
-            html = `
-            <div class="track-item">
-                <div class="col number">
-                    <span class="track-index">${1}</span>
-                    <span class="track-play">▶</span>
-                </div>
-                <div class="col title">
-                    ${trackById.title}
-                </div>
-                <div class="col artist">${trackById.artist_name}</div>
-                <div class="col duration">${convertTime(
-                    trackById.duration
-                )}</div>
-            </div>`
-
-            myTracks.insertAdjacentHTML("beforeend", html)
-        }
-    } catch (error) {
-        console.log(error)
-    }
 }
