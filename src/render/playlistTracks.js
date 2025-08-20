@@ -1,6 +1,6 @@
 import httpRequest from "../api/httpRequest.js"
 import EndPoints from "../api/endpoints.js"
-import { addTracksToPlaylist } from "../../main.js"
+import { addTracksToPlaylist } from "../components/sidebar.js"
 
 export function renderMySearchTracks(playlistID) {
     const sectionFindTracks = document.querySelector(".find-tracks")

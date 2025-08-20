@@ -9,7 +9,6 @@ import { renderArtistsSection } from "./src/render/popularArtistSection.js"
 import { renderDetail } from "./src/render/detailSection.js"
 import { renderPlaylistsSection } from "./src/render/popularPlaylistSection.js"
 import { handleSidebar, isPlaylistsTab } from "./src/components/sidebar.js"
-import { renderTracks } from "./src/render/tracksAtDetailPlaylist.js"
 
 import "./src/components/webcomponents/modal-app.js"
 import "./src/components/webcomponents/edit-detail-app.js"
@@ -248,18 +247,6 @@ function handleFollow(currentID, isArtist) {
                 toast.error(codeErr, messageErr)
                 // followBtn.classList.remove("active")
             }
-        }
-    })
-}
-
-export function addTracksToPlaylist(playlistID) {
-    const addTracksBtn = document.querySelectorAll(".find-tracks .add-btn")
-    if (!addTracksBtn) return
-
-    addTracksBtn.forEach((addBtn) => {
-        addBtn.onclick = (e) => {
-            const trackID = e.target.closest(".song-item ").dataset.trackId
-            renderTracks(trackID, playlistID)
         }
     })
 }

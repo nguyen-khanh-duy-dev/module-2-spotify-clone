@@ -7,6 +7,12 @@ import { renderDetail } from "../render/detailSection.js"
 import { showDetailPlaylist } from "../../main.js"
 import { renderMySearchTracks } from "../render/playlistTracks.js"
 import { toolTipSidebar } from "./toolTip/ttSidebar.js"
+import {
+    renderUpdateTracks,
+    renderMyTracks,
+} from "../render/tracksAtDetailPlaylist.js"
+
+import { handleDelTrack } from "./content/content.js"
 // import { renderMySearchTracks } from "../../main.js"
 
 const libraryContent = document.querySelector(".library-content")
@@ -586,30 +592,52 @@ async function handleUnfollowSidebar(currentArtistID, contextMenu) {
 
 let isArtist = true
 
+async function getLikedSongs() {
+    const { playlists } = await httpRequest.get(EndPoints.playlists.me)
+    console.log(playlists)
+
+    const likedSongs = playlists.filter((item) => item.name)
+    return likedSongs.id
+}
+
+export function addTracksToPlaylist(playlistID) {
+    const addTracksBtn = document.querySelectorAll(".find-tracks .add-btn")
+    if (!addTracksBtn) return
+
+    addTracksBtn.forEach((addBtn) => {
+        addBtn.onclick = (e) => {
+            const trackID = e.target.closest(".song-item ").dataset.trackId
+            renderUpdateTracks(trackID, playlistID)
+        }
+    })
+}
+
 export function renderDetailPlaylist() {
-    libraryContent.addEventListener("click", async (e) => {
+    libraryContent.onclick = async (e) => {
         const currentTab = document.querySelector(".nav-tab.active")
         currentTab.textContent === "Playlists"
             ? (isArtist = false)
             : (isArtist = true)
         const currentItem = e.target.closest(".library-item")
         if (!currentItem) return
-        const currentID = currentItem.dataset.playlistId
+        const currentPlaylistID = currentItem.dataset.playlistId
 
-        if (currentID) {
+        if (currentPlaylistID) {
             try {
                 if (!isArtist) {
                     const playlist = await httpRequest.get(
-                        EndPoints.playlists.byId(currentID)
+                        EndPoints.playlists.byId(currentPlaylistID)
                     )
+
                     updateDetailCreateUI(playlist)
                     showDetailCreate()
                     showEditPlaylist(playlist)
-                    renderMySearchTracks(currentID)
+                    renderMySearchTracks(currentPlaylistID)
+                    addTracksToPlaylist(currentPlaylistID)
                 } else {
                     isArtist = true
                     const artist = await httpRequest.get(
-                        EndPoints.artists.byId(currentID)
+                        EndPoints.artists.byId(currentPlaylistID)
                     )
                     await renderDetail(artist.id, true)
                     showDetailPlaylist()
@@ -622,7 +650,7 @@ export function renderDetailPlaylist() {
                 }
             }
         }
-    })
+    }
 }
 
 function showDetailCreate() {
@@ -824,40 +852,7 @@ function updateDetailCreateUI(playlist) {
     descEl.textContent = playlist.description || ""
 
     renderMyTracks(playlist.id)
-}
 
-async function renderMyTracks(playlistID) {
-    const myTrackSection = document.querySelector(".my-tracks")
-    const { tracks } = await httpRequest.get(`playlists/${playlistID}/tracks`)
-
-    if (!tracks) return
-
-    const headerHtml = `<div class="tracks-header">
-                            <div class="col number">#</div>
-                            <div class="col title">Title</div>
-                            <div class="col artist">Artist</div>
-                            <div class="col duration">⏱</div>
-                        </div>`
-    myTrackSection.innerHTML = headerHtml
-
-    let trackItemHtml = tracks
-        .map(
-            (track, index) =>
-                `<div class="track-item" data-track-id="${track.id}">
-            <div class="col number">
-                <span class="track-index">${index}</span>
-                <span class="track-play">▶</span>
-            </div>
-            <div class="col title">
-                ${track.track_title}
-            </div>
-            <div class="col artist">${track.artist_name}</div>
-            <div class="col duration">${convertTime(track.track_duration)}</div>
-        </div>`
-        )
-        .join("")
-
-    myTrackSection.insertAdjacentHTML("beforeend", trackItemHtml)
 }
 
 function handleCreate() {
