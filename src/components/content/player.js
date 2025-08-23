@@ -50,7 +50,7 @@ async function handlePlayer(trackId) {
         addTrackToLikedSongs(currentTrackId)
         handleProgress(currentTrackId, currentAudio)
         handlePlayFooter(currentAudio, currentTrackId)
-
+        handleVolume(currentAudio)
         // Handle repeat music
         repeatBtn.onclick = () => {
             repeatBtn.classList.toggle("active")
@@ -161,12 +161,12 @@ async function handleProgress(trackId, audio) {
 
     progressHandle.addEventListener("mousedown", (e) => {
         isDragging = true
-        updateFill(e, audio)
+        updateFill(e, audio, progressBar, progressFill, false)
     })
 
     document.addEventListener("mousemove", (e) => {
         if (isDragging) {
-            updateFill(e, audio)
+            updateFill(e, audio, progressBar, progressFill, false)
         }
     })
 
@@ -178,7 +178,7 @@ async function handleProgress(trackId, audio) {
         const percent = (audio.currentTime / audio.duration) * 100
         progressFill.style.width = `${percent}%`
         currentTimeEl.textContent = convertTime(audio.currentTime)
-        progressHandle.style.right = `${100 - percent - 2}%`
+        progressHandle.style.right = `${100 - percent - 1}%`
     })
 
     progressBar.onclick = (e) => {
@@ -192,11 +192,13 @@ async function handleProgress(trackId, audio) {
     }
 }
 
-function updateFill(e, audio) {
-    const progressContainer = document.querySelector(".progress-container")
-    const progressBar = progressContainer.querySelector(".progress-bar")
-    const progressFill = progressContainer.querySelector(".progress-fill")
-    const progressHandle = progressContainer.querySelector(".progress-handle")
+function updateFill(e, audio, progressBar, progressFill, isVolume) {
+    const icon = document.querySelector(".volume-container .control-btn i")
+
+    const volumeHandle = document.querySelector(
+        ".volume-container .volume-handle"
+    )
+
     const rect = progressBar.getBoundingClientRect()
     let offsetX = e.clientX - rect.left
 
@@ -206,8 +208,14 @@ function updateFill(e, audio) {
     const percent = (offsetX / rect.width) * 100
     progressFill.style.width = percent + "%"
 
-    // dùng audio.duration thay vì trackDuration
-    audio.currentTime = (percent / 100) * audio.duration
+    if (!isVolume) {
+        // dùng audio.duration thay vì trackDuration
+        audio.currentTime = (percent / 100) * audio.duration
+    } else {
+        audio.volume = offsetX / rect.width
+        volumeHandle.style.right = `${rect.width - offsetX - 3}px`
+        updateIconVolume(audio, icon)
+    }
 }
 
 function handleRepeatAudio(isRepeat, audio) {
@@ -254,5 +262,84 @@ function handlePlayFooter(audio, currentTrackId) {
             currentHitPlayBtn.classList.remove("fa-pause")
             currentHitPlayBtn.classList.add("fa-play")
         }
+    }
+}
+
+function handleVolume(audio) {
+    const volumeContainer = document.querySelector(".volume-container")
+    const volumeBar = volumeContainer.querySelector(".volume-bar")
+    const volumeFill = volumeContainer.querySelector(".volume-fill")
+    const volumeHandle = volumeContainer.querySelector(".volume-handle")
+    const controlBtn = volumeContainer.querySelector(".control-btn")
+    const icon = volumeContainer.querySelector(".control-btn i")
+    const toolTip = volumeContainer.querySelector(".tool-tip")
+
+    let originalVolume = audio.volume
+    let currentVolume = audio.volume
+
+    volumeFill.style.width = `${currentVolume * 100}%`
+    volumeHandle.style.right = `${100 - currentVolume * 100}%`
+    updateIconVolume(audio, icon)
+
+    const rect = volumeBar.getBoundingClientRect()
+
+    controlBtn.onclick = (e) => {
+        if (currentVolume > 0) {
+            audio.volume = 0
+            currentVolume = 0
+            volumeFill.style.width = `${0}%`
+            volumeHandle.style.right = `${100}%`
+
+            updateIconVolume(audio, icon)
+
+            toolTip.textContent = "Unmute"
+        } else {
+            audio.volume = originalVolume
+            currentVolume = originalVolume
+
+            volumeFill.style.width = `${currentVolume * 100}%`
+            volumeHandle.style.right = `${(1 - currentVolume) * 100}%`
+            updateIconVolume(audio, icon)
+            toolTip.textContent = "Mute"
+        }
+    }
+
+    volumeBar.onclick = (e) => {
+        const x = e.clientX
+        const offsetX = x - rect.left
+        currentVolume = offsetX / rect.width
+        audio.volume = currentVolume
+        originalVolume = currentVolume
+
+        volumeFill.style.width = offsetX + "px"
+        volumeHandle.style.right = `${rect.width - offsetX - 3}px`
+        updateIconVolume(audio, icon)
+    }
+
+    let isDragging = false
+
+    volumeHandle.addEventListener("mousedown", (e) => {
+        isDragging = true
+        updateFill(e, audio, volumeBar, volumeFill, true)
+    })
+
+    document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+            updateFill(e, audio, volumeBar, volumeFill, true)
+        }
+    })
+
+    document.addEventListener("mouseup", () => {
+        isDragging = false
+    })
+}
+
+function updateIconVolume(audio, iconEl) {
+    if (audio.volume >= 0.5) {
+        iconEl.className = "fas fa-volume-up"
+    } else if (audio.volume > 0 && audio.volume < 0.5) {
+        iconEl.className = "fas fa-volume-down"
+    } else {
+        iconEl.className = "fas fa-volume-mute"
     }
 }
