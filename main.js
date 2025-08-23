@@ -10,6 +10,9 @@ import { renderDetail } from "./src/render/detailSection.js"
 import { renderPlaylistsSection } from "./src/render/popularPlaylistSection.js"
 import { handleSidebar, isPlaylistsTab } from "./src/components/sidebar.js"
 
+// Player
+import { playerTrack } from "./src/components/content/player.js"
+
 import "./src/components/webcomponents/modal-app.js"
 import "./src/components/webcomponents/edit-detail-app.js"
 
@@ -100,6 +103,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // showContextMenu()
     // Render from sidebar
     // renderDetailPlaylist()
+
+    playerTrack()
 })
 
 // Function to show detail Play list of Artist
@@ -250,3 +255,10 @@ function handleFollow(currentID, isArtist) {
         }
     })
 }
+
+// // Player
+// document.addEventListener("DOMContentLoaded", async () => {
+//     function afterRender() {
+//         playerTrack()
+//     }
+// })

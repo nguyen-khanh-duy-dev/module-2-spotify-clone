@@ -170,6 +170,8 @@ function getCurrentSort() {
 }
 
 function sortData(list, option) {
+    console.log(list)
+
     let finalListSort = null
     if (option === "Recents") {
         finalListSort = [...list].sort((a, b) => {
@@ -607,7 +609,7 @@ export function addTracksToPlaylist(playlistID) {
     addTracksBtn.forEach((addBtn) => {
         addBtn.onclick = (e) => {
             const trackID = e.target.closest(".song-item ").dataset.trackId
-            renderUpdateTracks(trackID, playlistID)
+            renderUpdateTracks(trackID, playlistID, true)
         }
     })
 }
@@ -852,7 +854,6 @@ function updateDetailCreateUI(playlist) {
     descEl.textContent = playlist.description || ""
 
     renderMyTracks(playlist.id)
-
 }
 
 function handleCreate() {

@@ -466,6 +466,11 @@ hr {
     z-index: 1000;
 }
 
+.context-del-track .menu-item {
+    font-size: 13px;
+    padding: 10px 14px;
+}
+
 .menu-item {
     display: flex;
     align-items: center;
@@ -524,13 +529,15 @@ hr {
 /* Context menu */
 .context-my-playlist,
 .context-my-followed,
-.liked-playlists {
+.liked-playlists,
+.context-del-track {
     display: none;
 }
 
 .context-my-playlist.show,
 .context-my-followed.show,
-.liked-playlists.show {
+.liked-playlists.show,
+.context-del-track.show {
     display: block;
     background-color: #282828;
     color: #fff;
@@ -864,6 +871,7 @@ hr {
 
 .my-tracks .track-item:hover {
     background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
 }
 
 /* Cột số thứ tự */

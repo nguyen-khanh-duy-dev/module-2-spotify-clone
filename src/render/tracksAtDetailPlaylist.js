@@ -4,11 +4,10 @@ import { convertTime } from "../utils/convertTime.js"
 import toast from "../utils/toast.js"
 import { handleDelTrack } from "../components/content/content.js"
 
-export async function renderUpdateTracks(trackID, playlistID) {
+export async function renderUpdateTracks(trackID, playlistID, isAddTrack) {
     let html = ""
     const myTracks = document.querySelector(".my-tracks")
-    const myTracksSection = document.querySelector(".my-tracks .track-item")
-    try {
+    if (isAddTrack) {
         const track_id = trackID
         const credentials = {
             track_id,
@@ -21,39 +20,59 @@ export async function renderUpdateTracks(trackID, playlistID) {
             )
             if (!playlist_track) return
 
-            const trackById = await httpRequest.get(
+            const track = await httpRequest.get(
                 EndPoints.tracks.ById(playlist_track.track_id)
             )
-            console.log(trackById)
+            const trackCount = document.querySelectorAll(".track-item").length
+            const trackItem = document.createElement("div")
+            trackItem.className = "track-item"
+            trackItem.dataset.trackId = track.id
+            html = `<div class="col number">
+                        <span class="track-index">${trackCount}</span>
+                        <span class="track-play">▶</span>
+                    </div>
+                    <div class="col title">
+                        ${track.title}
+                    </div>
+                    <div class="col artist">${track.artist_name}</div>
+                    <div class="col duration">${convertTime(
+                        track.duration
+                    )}</div>`
+            trackItem.innerHTML = html
+            myTracks.appendChild(trackItem)
 
-            if (myTracksSection) {
-                html = `
-            <div class="track-item">
-                <div class="col number">
-                    <span class="track-index">${1}</span>
-                    <span class="track-play">▶</span>
-                </div>
-                <div class="col title">
-                    ${trackById.title}
-                </div>
-                <div class="col artist">${trackById.artist_name}</div>
-                <div class="col duration">${convertTime(
-                    trackById.duration
-                )}</div>
-            </div>`
-
-                myTracks.insertAdjacentHTML("beforeend", html)
-            }
+            handleDelTrack(playlistID)
             toast.success("Success", message)
         } catch (error) {
             const codeError = error?.response?.error.code
             const mesError = error?.response?.error.message
             toast.error(codeError, mesError)
         }
-    } catch (error) {
-        console.log(error)
+    } else {
+        try {
+            const currentTrackEl = myTracks.querySelector(
+                `[data-track-id="${trackID}"]`
+            )
+            // Tìm ra index của phần tử đang bấm xóa là phần tử số mấy
+            const removedIndex = [...myTracks.children].indexOf(currentTrackEl)
+
+            currentTrackEl.remove()
+            const trackItems = myTracks.querySelectorAll(".track-item")
+            for (let i = removedIndex - 1; i < trackItems.length; i++) {
+                trackItems[i].querySelector(".track-index").textContent = i
+            }
+            handleDelTrack(playlistID)
+        } catch (error) {
+            const codeError = error?.response?.error.code
+            const mesError = error?.response?.error.message
+            if (codeError && mesError) {
+                toast.error(codeError, mesError)
+            }
+        }
     }
 }
+
+function getLastIndex() {}
 
 export async function renderMyTracks(playlistID) {
     const myTrackSection = document.querySelector(".my-tracks")
@@ -72,7 +91,7 @@ export async function renderMyTracks(playlistID) {
     let trackItemHtml = tracks
         .map(
             (track, index) =>
-                `<div class="track-item" data-track-id="${track.id}">
+                `<div class="track-item" data-track-id="${track.track_id}">
             <div class="col number">
                 <span class="track-index">${index}</span>
                 <span class="track-play">▶</span>
@@ -87,5 +106,5 @@ export async function renderMyTracks(playlistID) {
         .join("")
 
     myTrackSection.insertAdjacentHTML("beforeend", trackItemHtml)
-    handleDelTrack()
+    handleDelTrack(playlistID)
 }

@@ -28,6 +28,7 @@ class EndPoints {
         getTracks: (id) => `playlists/${id}/tracks`,
         addTrack: (id) => `playlists/${id}/tracks`,
         followed: "me/playlists/followed",
+        removeTrack: (playlistID, trackID) => `playlists/${playlistID}/tracks/${trackID}`
     }
 
     // Artists
