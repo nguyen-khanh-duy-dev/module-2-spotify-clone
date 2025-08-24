@@ -101,74 +101,82 @@ export function handleVolume(audio) {
     })
 }
 
-export function handleNextPlayer(tracksList, isShuffle, isArtist) {
+export function handleNextPlayer(
+    tracksList,
+    isShuffle = false,
+    isArtist = false
+) {
     const nextBtn = document.querySelector(".control-btn.next")
     const hitCards = document.querySelectorAll(".hit-card")
     let randomNumber = null
 
-    nextBtn.onclick = async (e) => {
+    // Xóa event cũ để tránh gắn chồng
+    nextBtn.replaceWith(nextBtn.cloneNode(true))
+    const newNextBtn = document.querySelector(".control-btn.next")
+
+    newNextBtn.onclick = async () => {
         const playerLeft = document.querySelector(".player-left")
         const isInPlaylist = playerLeft.dataset.inPlaylist === "true"
-        let currentTrackId = playerLeft.dataset.trackId
-
-        let nextTrackId
-        console.log(isInPlaylist, isShuffle)
 
         if (!isInPlaylist) {
             // chọn random 1 bài trong hits-section
             randomNumber = Math.floor(Math.random() * hitCards.length)
             nextTrackId = hitCards[randomNumber].dataset.hitId
         } else {
-            // playerLeft.dataset.inPlaylist = true
-            randomNumber = Math.floor(Math.random() * tracksList.length)
             if (isShuffle) {
-                // Chạy ngẫu nhiên
-                isArtist
-                    ? (nextTrackId = tracksList[randomNumber].id)
-                    : (nextTrackId = tracksList[randomNumber].track_id)
+                randomNumber = Math.floor(Math.random() * tracksList.length)
+                nextTrackId = isArtist
+                    ? tracksList[randomNumber].id
+                    : tracksList[randomNumber].track_id
             } else {
-                // Chạy theo thứ tự
-                let currentIndex = tracksList.findIndex(
-                    (track) => String(track.id) === String(currentTrackId)
+                let currentTrackId = playerLeft.dataset.trackId
+
+                let currentIndex = tracksList.findIndex((track) =>
+                    isArtist
+                        ? track.id.trim() === currentTrackId.trim()
+                        : track.track_id.trim() === currentTrackId.trim()
                 )
 
-                // Lùi về bài trước
                 if (currentIndex < tracksList.length - 1) {
                     currentIndex++
                 } else {
                     currentIndex = 0 // quay vòng về đầu playlist
                 }
-                console.log(currentIndex)
 
-                isArtist
-                    ? (nextTrackId = tracksList[currentIndex].id)
-                    : (nextTrackId = tracksList[currentIndex].track_id)
+                nextTrackId = isArtist
+                    ? tracksList[currentIndex].id
+                    : tracksList[currentIndex].track_id
             }
         }
 
         if (nextTrackId) {
-            // dùng lại logic play track như lúc click
             renderPlayerFooter(
                 nextTrackId,
                 await isLikedTrack(nextTrackId),
-                isInPlaylist ? true : false
+                isInPlaylist
             )
-            handlePlayer(nextTrackId, tracksList)
-
-            // handleNextPlayer(tracksList, isShuffle, isArtist)
+            // truyền lại isArtist để giữ đúng context
+            handlePlayer(nextTrackId, tracksList, isArtist, isShuffle)
         }
     }
 }
 
-export function handlePreviousPlayer(tracksList, isShuffle, isArtist) {
+export function handlePreviousPlayer(
+    tracksList,
+    isShuffle = false,
+    isArtist = false
+) {
     const prevBtn = document.querySelector(".control-btn.previous")
     const hitCards = document.querySelectorAll(".hit-card")
     let randomNumber = null
 
-    prevBtn.onclick = async (e) => {
+    // Xóa event cũ để tránh gắn chồng
+    prevBtn.replaceWith(prevBtn.cloneNode(true))
+    const newPrevBtn = document.querySelector(".control-btn.previous")
+
+    newPrevBtn.onclick = async () => {
         const playerLeft = document.querySelector(".player-left")
         const isInPlaylist = playerLeft.dataset.inPlaylist === "true"
-        let currentTrackId = playerLeft.dataset.trackId
 
         let prevTrackId
 
@@ -177,18 +185,20 @@ export function handlePreviousPlayer(tracksList, isShuffle, isArtist) {
             randomNumber = Math.floor(Math.random() * hitCards.length)
             prevTrackId = hitCards[randomNumber].dataset.hitId
         } else {
-            console.log("haha")
-
-            randomNumber = Math.floor(Math.random() * tracksList.length)
             if (isShuffle) {
-                // Chạy ngẫu nhiên
-                isArtist
-                    ? (prevTrackId = tracksList[randomNumber].id)
-                    : (prevTrackId = tracksList[randomNumber].track_id)
+                randomNumber = Math.floor(Math.random() * tracksList.length)
+                prevTrackId = isArtist
+                    ? tracksList[randomNumber].id
+                    : tracksList[randomNumber].track_id
             } else {
-                // Chạy theo thứ tự (lùi lại bài trước)
-                let currentIndex = tracksList.findIndex(
-                    (track) => track.id === currentTrackId
+                let currentTrackId = playerLeft.dataset.trackId
+
+                let currentIndex = tracksList.findIndex((track) =>
+                    isArtist
+                        ? String(track.id).trim() ===
+                          String(currentTrackId).trim()
+                        : String(track.track_id).trim() ===
+                          String(currentTrackId).trim()
                 )
 
                 if (currentIndex > 0) {
@@ -197,9 +207,9 @@ export function handlePreviousPlayer(tracksList, isShuffle, isArtist) {
                     currentIndex = tracksList.length - 1 // quay vòng về cuối playlist
                 }
 
-                isArtist
-                    ? (prevTrackId = tracksList[currentIndex].id)
-                    : (prevTrackId = tracksList[currentIndex].track_id)
+                prevTrackId = isArtist
+                    ? tracksList[currentIndex].id
+                    : tracksList[currentIndex].track_id
             }
         }
 
@@ -207,10 +217,10 @@ export function handlePreviousPlayer(tracksList, isShuffle, isArtist) {
             renderPlayerFooter(
                 prevTrackId,
                 await isLikedTrack(prevTrackId),
-                isInPlaylist ? true : false
+                isInPlaylist
             )
-            handlePlayer(prevTrackId, tracksList)
-            // handleNextPlayer(tracksList, isShuffle, isArtist)
+            // truyền lại isArtist & isShuffle để giữ context
+            handlePlayer(prevTrackId, tracksList, isArtist, isShuffle)
         }
     }
 }
