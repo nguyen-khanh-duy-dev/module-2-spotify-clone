@@ -11,7 +11,7 @@ import { renderPlaylistsSection } from "./src/render/popularPlaylistSection.js"
 import { handleSidebar, isPlaylistsTab } from "./src/components/sidebar.js"
 
 // Player
-import { playerTrack } from "./src/components/content/player.js"
+import { playerTrack, playerPlaylist } from "./src/components/content/player.js"
 
 import "./src/components/webcomponents/modal-app.js"
 import "./src/components/webcomponents/edit-detail-app.js"
@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // renderDetailPlaylist()
 
     playerTrack()
+    playerPlaylist()
 })
 
 // Function to show detail Play list of Artist

@@ -6,6 +6,14 @@ import { renderUpdateTracks } from "../../render/tracksAtDetailPlaylist.js"
 import toast from "../../utils/toast.js"
 import { convertTime } from "../../utils/convertTime.js"
 
+// Import from player control
+import {
+    handlePlayFooter,
+    handleNextPlayer,
+    handlePreviousPlayer,
+    handleVolume,
+} from "./playerControl.js"
+
 let currentAudio = null // audio hiện tại
 let currentTrackId = null // id track hiện tại
 let currentIcon = null
@@ -24,7 +32,7 @@ export function playerTrack() {
     })
 }
 
-async function handlePlayer(trackId) {
+export async function handlePlayer(trackId, tracksList, isArtist) {
     const hitSection = document.querySelector(".hits-section")
     const playBtn = document.querySelector(".player .play-btn i")
     const repeatBtn = document.querySelector(".control-btn.repeat")
@@ -51,10 +59,12 @@ async function handlePlayer(trackId) {
         handleProgress(currentTrackId, currentAudio)
         handlePlayFooter(currentAudio, currentTrackId)
         handleVolume(currentAudio)
+        handleNextPlayer(tracksList, isShuffle(), isArtist)
+        handlePreviousPlayer(tracksList, isShuffle(), isArtist)
+
         // Handle repeat music
         repeatBtn.onclick = () => {
             repeatBtn.classList.toggle("active")
-            console.log(currentAudio.loop, currentAudio)
 
             handleRepeatAudio(currentAudio.loop, currentAudio)
         }
@@ -99,7 +109,7 @@ async function handlePlayer(trackId) {
 }
 
 // Function to check track in Liked Playlist
-async function isLikedTrack(trackId) {
+export async function isLikedTrack(trackId) {
     const { playlists } = await httpRequest.get(EndPoints.playlists.me)
     const likedPlaylist = playlists.filter(
         (playlist) => playlist.name === "Liked Songs"
@@ -225,7 +235,6 @@ function handleRepeatAudio(isRepeat, audio) {
 function enableRepeat(audio) {
     const toolTip = document.querySelector(".control-btn.repeat .tool-tip")
     toolTip.textContent = "Enable repeat"
-    console.log(toolTip)
 
     audio.loop = true
 }
@@ -236,105 +245,7 @@ function disableRepeat(audio) {
     audio.loop = false
 }
 
-function handlePlayFooter(audio, currentTrackId) {
-    const playBtnFooter = document.querySelector(".player .play-btn")
-    const toolTip = playBtnFooter.querySelector(".tool-tip")
-    const iconPlay = playBtnFooter.querySelector("i")
-    const currentHitPlayBtn = document
-        .querySelector(`.hit-card[data-hit-id="${currentTrackId}"]`)
-        .querySelector(".hit-play-btn i")
-
-    playBtnFooter.onclick = (e) => {
-        if (audio.paused) {
-            toolTip.textContent = "Pause"
-            audio.play()
-            iconPlay.classList.remove("fa-play")
-            iconPlay.classList.add("fa-pause")
-
-            currentHitPlayBtn.classList.remove("fa-play")
-            currentHitPlayBtn.classList.add("fa-pause")
-        } else {
-            toolTip.textContent = "Play"
-            audio.pause()
-            iconPlay.classList.remove("fa-pause")
-            iconPlay.classList.add("fa-play")
-
-            currentHitPlayBtn.classList.remove("fa-pause")
-            currentHitPlayBtn.classList.add("fa-play")
-        }
-    }
-}
-
-function handleVolume(audio) {
-    const volumeContainer = document.querySelector(".volume-container")
-    const volumeBar = volumeContainer.querySelector(".volume-bar")
-    const volumeFill = volumeContainer.querySelector(".volume-fill")
-    const volumeHandle = volumeContainer.querySelector(".volume-handle")
-    const controlBtn = volumeContainer.querySelector(".control-btn")
-    const icon = volumeContainer.querySelector(".control-btn i")
-    const toolTip = volumeContainer.querySelector(".tool-tip")
-
-    let originalVolume = audio.volume
-    let currentVolume = audio.volume
-
-    volumeFill.style.width = `${currentVolume * 100}%`
-    volumeHandle.style.right = `${100 - currentVolume * 100}%`
-    updateIconVolume(audio, icon)
-
-    const rect = volumeBar.getBoundingClientRect()
-
-    controlBtn.onclick = (e) => {
-        if (currentVolume > 0) {
-            audio.volume = 0
-            currentVolume = 0
-            volumeFill.style.width = `${0}%`
-            volumeHandle.style.right = `${100}%`
-
-            updateIconVolume(audio, icon)
-
-            toolTip.textContent = "Unmute"
-        } else {
-            audio.volume = originalVolume
-            currentVolume = originalVolume
-
-            volumeFill.style.width = `${currentVolume * 100}%`
-            volumeHandle.style.right = `${(1 - currentVolume) * 100}%`
-            updateIconVolume(audio, icon)
-            toolTip.textContent = "Mute"
-        }
-    }
-
-    volumeBar.onclick = (e) => {
-        const x = e.clientX
-        const offsetX = x - rect.left
-        currentVolume = offsetX / rect.width
-        audio.volume = currentVolume
-        originalVolume = currentVolume
-
-        volumeFill.style.width = offsetX + "px"
-        volumeHandle.style.right = `${rect.width - offsetX - 3}px`
-        updateIconVolume(audio, icon)
-    }
-
-    let isDragging = false
-
-    volumeHandle.addEventListener("mousedown", (e) => {
-        isDragging = true
-        updateFill(e, audio, volumeBar, volumeFill, true)
-    })
-
-    document.addEventListener("mousemove", (e) => {
-        if (isDragging) {
-            updateFill(e, audio, volumeBar, volumeFill, true)
-        }
-    })
-
-    document.addEventListener("mouseup", () => {
-        isDragging = false
-    })
-}
-
-function updateIconVolume(audio, iconEl) {
+export function updateIconVolume(audio, iconEl) {
     if (audio.volume >= 0.5) {
         iconEl.className = "fas fa-volume-up"
     } else if (audio.volume > 0 && audio.volume < 0.5) {
@@ -343,3 +254,107 @@ function updateIconVolume(audio, iconEl) {
         iconEl.className = "fas fa-volume-mute"
     }
 }
+
+export function playerPlaylist() {
+    const artistCards = document.querySelectorAll(".artist-card")
+    const playlistBtns = document.querySelectorAll(
+        ".playlist-card .playlist-play-btn"
+    )
+    const artistPlayBtns = document.querySelectorAll(
+        ".artist-card .artist-play-btn"
+    )
+    artistPlayBtns.forEach((playBtn) => {
+        playBtn.onclick = async (e) => {
+            e.stopPropagation()
+            const currentArtistId =
+                e.currentTarget.closest(".artist-card").dataset.artistId
+            const { tracks } = await httpRequest.get(EndPoints.tracks.all)
+            const tracksArtist = tracks.filter(
+                (track) => track.artist_id === currentArtistId
+            )
+
+            handlePlayerArtist(tracksArtist)
+        }
+    })
+
+    playlistBtns.forEach((playBtn) => {
+        playBtn.onclick = async (e) => {
+            e.stopPropagation()
+            const currentPlaylistId =
+                e.currentTarget.closest(".playlist-card").dataset.playlistId
+
+            const { tracks } = await httpRequest.get(
+                EndPoints.playlists.getTracks(currentPlaylistId)
+            )
+
+            handlePlayerPlaylist(tracks)
+        }
+    })
+}
+
+async function handlePlayerArtist(tracksArtist) {
+    try {
+        if (!tracksArtist || tracksArtist.length === 0) return
+
+        // Lấy random 1 bài hát trong list artist
+        const randomNumber = Math.floor(Math.random() * tracksArtist.length)
+        const track = tracksArtist[randomNumber]
+        const trackId = track.id
+
+        // Render player footer
+        renderPlayerFooter(trackId, await isLikedTrack(trackId), true)
+
+        // Gọi lại handlePlayer (tận dụng logic có sẵn)
+        handlePlayer(trackId, tracksArtist, true)
+    } catch (error) {
+        console.log("Error handlePlayerArtist:", error)
+    }
+}
+
+async function handlePlayerPlaylist(tracksPlaylist) {
+    console.log(tracksPlaylist)
+
+    try {
+        if (!tracksPlaylist || tracksPlaylist.length === 0) return
+
+        // Lấy random 1 bài hát trong list artist
+        const randomNumber = Math.floor(Math.random() * tracksPlaylist.length)
+        const track = tracksPlaylist[randomNumber]
+        const trackId = track.track_id
+        console.log(trackId)
+
+        // Render player footer
+        renderPlayerFooter(trackId, await isLikedTrack(trackId), true)
+
+        // Gọi lại handlePlayer (tận dụng logic có sẵn)
+        handlePlayer(trackId, tracksPlaylist, false)
+    } catch (error) {
+        console.log("Error handlePlayerArtist:", error)
+    }
+}
+
+function initShuffle() {
+    const shuffleBtn = document.querySelector(".control-btn.shuffle")
+    const toolTip = shuffleBtn.querySelector(".tool-tip")
+    let shuffleStatus = null
+    shuffleBtn.onclick = (e) => {
+        if (shuffleBtn.classList.contains("active")) {
+            shuffleBtn.classList.remove("active")
+            toolTip.textContent = "Disable Shuffle"
+        } else {
+            shuffleBtn.classList.add("active")
+            toolTip.textContent = "Enable Shuffle"
+        }
+    }
+}
+
+function isShuffle() {
+    const shuffleBtn = document.querySelector(".control-btn.shuffle")
+    if (shuffleBtn.classList.contains("active")) {
+        return true
+    } else {
+        return false
+    }
+}
+
+initShuffle()

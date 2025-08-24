@@ -2,7 +2,7 @@ import httpRequest from "../api/httpRequest.js"
 import EndPoints from "../api/endpoints.js"
 import { convertTime } from "../utils/convertTime.js"
 
-export async function renderPlayerFooter(trackId, isLiked) {
+export async function renderPlayerFooter(trackId, isLiked, dataInPlaylist = false) {
     const timeTotal = document.querySelector('.time.total')
     const playerLeft = document.querySelector(".player-left")
     const playerImage = document.querySelector(".player-left .player-image")
@@ -11,6 +11,7 @@ export async function renderPlayerFooter(trackId, isLiked) {
     const addBtn = document.querySelector(".player .add-btn")
     const iconLiked = document.querySelector(".player .add-btn i")
     const trackById = await httpRequest.get(EndPoints.tracks.ById(trackId))
+    playerLeft.dataset.inPlaylist = dataInPlaylist
     timeTotal.textContent = convertTime(trackById.duration)
     playerImage.src = trackById.image_url
     playerTitle.textContent = trackById.title
