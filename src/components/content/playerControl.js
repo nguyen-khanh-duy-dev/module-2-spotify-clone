@@ -101,6 +101,7 @@ export function handleVolume(audio) {
     })
 }
 
+let nextTrackId = null
 export function handleNextPlayer(
     tracksList,
     isShuffle = false,
